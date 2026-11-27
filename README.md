@@ -129,6 +129,16 @@ For email login, configure the Supabase site URL, numeric-code email templates, 
 
 ## Development and checks
 
+### Deploy on Vercel
+
+Import this repository into Vercel with the **Other** framework preset. The included `vercel.json` builds `dist/` and routes `/api/summary` and `/api/voice` to a Node.js function in Mumbai. Use Node.js 24 for the deployment runtime.
+
+Set `OPENAI_API_KEY` and `SMALLEST_API_KEY` as **sensitive production environment variables** in the Vercel project, with optional `OPENAI_SUMMARY_MODEL=gpt-5-nano` and `SMALLEST_VOICE_ID=meher`. Do not upload `.env`. The production branch is `main`; changes on `dev` remain development work until a tested release. Preview deployments without provider secrets use the local-summary and browser-speech fallbacks.
+
+The voice server caps audio at 4 MiB to stay below Vercel's response limit. Request counters are per function instance, rather than a global account quota. Monitor your provider usage for public deployments. Configure the Vercel origin in Supabase when completing email login setup.
+
+### Run checks
+
 ```sh
 npm test                # Unit and HTTP boundary checks
 npm run build           # Bundle the Supabase browser SDK

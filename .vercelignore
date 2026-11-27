@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+.vercel
+.openai
+.sites-runtime
+exports
+docs
+tests
+LICENSE
+README.md
+node_modules

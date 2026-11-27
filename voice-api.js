@@ -13,7 +13,8 @@ export async function synthesizeVoice(text, { env = process.env, fetcher = fetch
   const chunks = []; let size = 0;
   for await (const chunk of response.body) {
     size += chunk.length;
-    if (size > 8 * 1024 * 1024) throw new Error("Voice response too large");
+    // Stay below Vercel Functions' 4.5 MB response limit.
+    if (size > 4 * 1024 * 1024) throw new Error("Voice response too large");
     chunks.push(chunk);
   }
   const audio = Buffer.concat(chunks);
