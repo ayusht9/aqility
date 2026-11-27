@@ -199,6 +199,23 @@
           refresh, or explore the labeled demo.
         </div>
         <div id="dashboard-content" aria-busy="true">
+          <section id="ai-summary" class="panel summary-panel" aria-labelledby="summary-title">
+            <div class="panel-heading summary-heading">
+              <div>
+                <span class="outlook-label">Your air, explained</span>
+                <h2 id="summary-title">AI summary &amp; voice</h2>
+                <p>Summarize current conditions, then listen to your briefing.</p>
+              </div>
+              <div class="summary-actions">
+                <button id="generate-summary" class="button primary" type="button" disabled>AI summary</button>
+                <button id="listen-summary" class="button quiet" type="button" aria-pressed="false" disabled>Listen</button>
+              </div>
+            </div>
+            <p id="summary-source" class="summary-source"></p>
+            <p id="generated-summary" class="summary-copy">Load a city’s conditions to create a summary.</p>
+            <p id="summary-status" class="panel-footnote" role="status" aria-live="polite" aria-atomic="true"></p>
+            <p class="panel-footnote">General adult guidance. Your personal profile may need extra precautions. Only environmental readings and your selected activity are sent for AI summaries. Listen sends the displayed summary to smallest.ai when configured, with browser speech as a fallback.</p>
+          </section>
           <section class="metrics" aria-label="Current environmental metrics">
             <article class="metric-card aqi-card">
               <div class="metric-heading">
@@ -360,23 +377,6 @@
               </div>
             </section>
           </div>
-          <section class="panel summary-panel" aria-labelledby="summary-title">
-            <div class="panel-heading summary-heading">
-              <div>
-                <span class="outlook-label">Your air, explained</span>
-                <h2 id="summary-title">A quick briefing</h2>
-                <p>Current conditions and the outdoor outlook, in plain language.</p>
-              </div>
-              <div class="summary-actions">
-                <button id="generate-summary" class="button primary" type="button" disabled>AI summary</button>
-                <button id="listen-summary" class="button quiet" type="button" aria-pressed="false" disabled>Listen</button>
-              </div>
-            </div>
-            <p id="summary-source" class="summary-source"></p>
-            <p id="generated-summary" class="summary-copy">Load a city’s conditions to create a summary.</p>
-            <p id="summary-status" class="panel-footnote" role="status" aria-live="polite" aria-atomic="true"></p>
-            <p class="panel-footnote">General adult guidance. Your personal profile may need extra precautions. Only environmental readings and your selected activity are sent for AI summaries. Listen sends the displayed summary to smallest.ai when configured, with browser speech as a fallback.</p>
-          </section>
           <section
             id="forecast"
             class="panel planner"
