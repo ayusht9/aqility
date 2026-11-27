@@ -1,11 +1,14 @@
 import http from "node:http";
 import { readFile } from "node:fs/promises";
+import { handleSummary } from "./summary-api.js";
 const files = {
   "/": ["index.html", "text/html"],
   "/app.js": ["app.js", "text/javascript"],
   "/engine.js": ["engine.js", "text/javascript"],
   "/data.js": ["data.js", "text/javascript"],
   "/chart.js": ["chart.js", "text/javascript"],
+  "/summary.js": ["summary.js", "text/javascript"],
+  "/summary-data.js": ["summary-data.js", "text/javascript"],
   "/style.css": ["style.css", "text/css"],
   "/auth.js": ["auth.js", "text/javascript"],
   "/auth.css": ["auth.css", "text/css"],
@@ -15,7 +18,9 @@ const files = {
 };
 http
   .createServer(async (req, res) => {
-    const entry = files[new URL(req.url, "http://localhost").pathname];
+    const pathname = new URL(req.url, "http://localhost").pathname;
+    if (pathname === "/api/summary") return handleSummary(req, res);
+    const entry = files[pathname];
     if (!entry) {
       res.writeHead(404);
       res.end("Not found");
@@ -35,6 +40,6 @@ http
       res.end("Unable to read application file");
     }
   })
-  .listen(5173, "127.0.0.1", () =>
-    console.log("Aqility: http://localhost:5173"),
+  .listen(Number(process.env.PORT || 5173), "127.0.0.1", () =>
+    console.log(`Aqility: http://localhost:${process.env.PORT || 5173}`),
   );

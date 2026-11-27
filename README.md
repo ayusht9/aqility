@@ -4,6 +4,16 @@ Run all commands from the repository root. Application files live directly here:
 
 An urban air-quality assistant for a hackathon. Run `npm start`, then open http://localhost:5173. Run `npm test` for health-guidance, history, planning, and authentication validation checks. The public environmental dashboard requires no API keys. Email authentication needs a configured Supabase project; its official browser SDK is bundled locally.
 
+## Summary and spoken playback
+
+Choose **AI summary** in the quick briefing panel, then **Listen** to read it aloud or **Stop reading** to stop. Playback is opt-in and stops when dashboard inputs change or the tab is hidden. Browsers without speech support retain the written summary. Voices come from the browser/operating system; some speech services may process text remotely.
+
+The summary covers environmental readings and the selected activity for a general adult. Health profile and account fields are excluded from requests; personalized precautions remain in the dashboard. Loading or changing data clears the old briefing. Demo data and missing readings remain explicitly labeled.
+
+Without AI credentials, the button produces a **Local summary** from the existing rules. To enable generated summaries, set the server-only `AI_GATEWAY_API_KEY` in your environment or a local `.env` file; `.env.example` lists the settings. Start with `node --env-file=.env server.js` if using a file. `AI_SUMMARY_MODEL` defaults to `google/gemini-3.8-flash`. Never put the gateway key in `dist/` or public browser configuration. The server uses the AI SDK, limits request size/concurrency/frequency, and falls back to the local summary on provider failure. No live AI generation has been verified without credentials.
+
+`/api/summary` requires the Node server (or a production backend implementing the same endpoint). Static-only hosting keeps local summaries and browser speech through the client fallback. This change does not publish the hosted site. Run `npm run test:summary` with the app server running for browser checks. These exercise the real local API; generated responses and speech playback are mocked for deterministic checks. Audible playback needs a device check.
+
 ## Email OTP authentication
 
 Login and registration use Supabase Auth email OTP. Login sets `shouldCreateUser: false`; registration sets it to `true`. Only the email and optional display name are sent to Supabase. Health fields never enter authentication requests. A numeric code is verified by the provider, never generated or checked in browser code. There are no production test codes or mocked authentication endpoints.
@@ -46,8 +56,8 @@ For browser regression checks, run `npm install`, keep `npm start` running, then
 
 ## Scope and sources
 
-This prototype uses an explainable rules engine, not a trained AI or clinical risk model. It connects environmental conditions with published health precautions, not patient records or epidemiological outcome statistics. Historical data are archived model estimates, not observations. Do not interpret the historical comparison as evidence of a causal health relationship.
+The planner uses an explainable rules engine, not a clinical risk model. Optional AI summaries rephrase its environmental report; they do not drive the planner or assess individual medical risk. The app connects environmental conditions with published health precautions, not patient records or epidemiological outcome statistics. Historical data are archived model estimates, not observations. Do not interpret the historical comparison as evidence of a causal health relationship.
 
 AQI precautions: https://www.airnow.gov/aqi/aqi-basics/ and https://www.airnow.gov/sites/default/files/2023-03/air-quality-guide-for-particle-pollution_0.pdf. Model data: https://open-meteo.com/en/docs/air-quality-api, https://open-meteo.com/en/docs and https://atmosphere.copernicus.eu/. Open-Meteo free endpoint is for noncommercial use; review its licensing before commercialization.
 
-The planner applies conservative prototype thresholds (temperature below 10°C or at least 30°C, UV at least 6, rain probability at least 40%) alongside AQI rules. These thresholds are planning heuristics, not validated medical cutoffs. The app does not diagnose, prescribe medication, or guarantee safe outdoor conditions. A production LLM integration would require a server-side secret, grounded sources, and evaluation. No credentials should be added to static browser code.
+The planner applies conservative prototype thresholds (temperature below 10°C or at least 30°C, UV at least 6, rain probability at least 40%) alongside AQI rules. These thresholds are planning heuristics, not validated medical cutoffs. The app does not diagnose, prescribe medication, or guarantee safe outdoor conditions. AI summaries can make mistakes and require evaluation before production use. No credentials should be added to static browser code.
