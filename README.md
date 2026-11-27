@@ -15,7 +15,8 @@ Air-quality insights, outdoor planning, AI summaries, and spoken briefings in on
 [![Last commit on dev](https://img.shields.io/github/last-commit/ayusht9/aqility/dev?label=last%20commit%20%28dev%29&color=103d43)](https://github.com/ayusht9/aqility/commits/dev/)
 [![Repository size](https://img.shields.io/github/repo-size/ayusht9/aqility?color=103d43)](https://github.com/ayusht9/aqility)
 
-[**ChatGPT-hosted preview**](https://aqility-air-companion.afloatsesame32.chatgpt.site) ·
+[**Live app on Vercel**](https://aqility.vercel.app) ·
+[ChatGPT-hosted preview](https://aqility-air-companion.afloatsesame32.chatgpt.site) ·
 [Watch the demo](https://raw.githubusercontent.com/ayusht9/aqility/dev/docs/media/aqility-demo.mp4) ·
 [Quick start](#quick-start) ·
 [Screenshots](#screenshots) ·
@@ -27,7 +28,7 @@ Air-quality insights, outdoor planning, AI summaries, and spoken briefings in on
 
 Aqility brings modeled US AQI and weather together with a 24-hour outdoor planner, optional personal precautions, and an AI-generated briefing you can read or listen to.
 
-The ChatGPT-hosted link is an earlier published preview and may differ from `dev`. Run locally for the latest AI and voice integration. Server API keys are configured separately for each deployment.
+The [Vercel deployment](https://aqility.vercel.app) serves the released app with AI summaries and cloud voice. The ChatGPT-hosted link is an earlier published preview and may differ from `dev`. Server API keys are configured separately for each deployment.
 
 ## Features
 
@@ -132,6 +133,8 @@ For email login, configure the Supabase site URL, numeric-code email templates, 
 ### Deploy on Vercel
 
 Import this repository into Vercel with the **Other** framework preset. The included `vercel.json` builds `dist/` and routes `/api/summary` and `/api/voice` to a Node.js function in Mumbai. Use Node.js 24 for the deployment runtime.
+
+The live deployment is **https://aqility.vercel.app**. GPT-5 nano generation, smallest.ai WAV playback, and Stop have been verified on this production URL.
 
 Set `OPENAI_API_KEY` and `SMALLEST_API_KEY` as **sensitive production environment variables** in the Vercel project, with optional `OPENAI_SUMMARY_MODEL=gpt-5-nano` and `SMALLEST_VOICE_ID=meher`. Do not upload `.env`. The production branch is `main`; changes on `dev` remain development work until a tested release. Preview deployments without provider secrets use the local-summary and browser-speech fallbacks.
 
