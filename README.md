@@ -77,8 +77,6 @@ Health fields stay in memory in the browser tab. They are excluded from authenti
 
 **[Watch or download the video](docs/media/aqility-demo.mp4)** · [Download subtitles](docs/media/aqility-demo.srt)
 
-[LinkedIn post draft](docs/media/linkedin-post.txt)
-
 A 55-second horizontal 1080p walkthrough of the updated app: change the daily routine, inspect lower-emission alternatives and indoor-air tips, read why each action fits and how it helps, compare forecast hours, and generate a spoken AI briefing. The film includes original illustrations, real app interactions, genuine GPT-5 nano generation, smallest.ai narration, and highlighted captions. Environmental data is labeled as illustrative. Audio contains narration and an app voice excerpt, with no background music or hum. See [reproduction steps](docs/DEVELOPMENT.md#demo-video).
 
 ## Quick start
