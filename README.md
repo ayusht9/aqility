@@ -6,7 +6,9 @@ An urban air-quality assistant for a hackathon. Run `npm start`, then open http:
 
 ## Summary and spoken playback
 
-Choose **AI summary** in the quick briefing panel, then **Listen** to read it aloud or **Stop reading** to stop. Playback is opt-in and stops when dashboard inputs change or the tab is hidden. Browsers without speech support retain the written summary. Voices come from the browser/operating system; some speech services may process text remotely.
+Choose **AI summary** in the quick briefing panel, then **Listen** to read it aloud or **Stop reading** to stop. Playback is opt-in and stops when dashboard inputs change or the tab is hidden. Set `SMALLEST_API_KEY` in `.env` to use smallest.ai speech. The server calls Lightning v3.1 Pro with the `meher` voice (`SMALLEST_VOICE_ID` overrides the voice). Only the displayed summary is sent for speech generation. Audio stays in memory; replaying the same summary reuses the audio. New summaries clear the audio cache. These requests use your provider credits.
+
+Without that key, or if speech generation fails, playback uses browser speech where supported. Some browser speech services process text remotely. Browsers without either voice option retain the written summary. The smallest.ai key remains server-only; no live provider audio has been verified without a key. Run `npm run test:voice` for cloud playback checks using simulated provider responses and audio playback. The Node server serves `/api/voice`; static-only hosting uses browser speech.
 
 The summary covers environmental readings and the selected activity for a general adult. Health profile and account fields are excluded from requests; personalized precautions remain in the dashboard. Loading or changing data clears the old briefing. Demo data and missing readings remain explicitly labeled.
 

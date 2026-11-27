@@ -1,6 +1,7 @@
 import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { handleSummary } from "./summary-api.js";
+import { handleVoice } from "./voice-api.js";
 const files = {
   "/": ["index.html", "text/html"],
   "/app.js": ["app.js", "text/javascript"],
@@ -20,6 +21,7 @@ http
   .createServer(async (req, res) => {
     const pathname = new URL(req.url, "http://localhost").pathname;
     if (pathname === "/api/summary") return handleSummary(req, res);
+    if (pathname === "/api/voice") return handleVoice(req, res);
     const entry = files[pathname];
     if (!entry) {
       res.writeHead(404);

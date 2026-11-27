@@ -9,8 +9,18 @@ export function initSummary() {
   const speech = window.speechSynthesis;
   const supported = !!speech && typeof window.SpeechSynthesisUtterance === "function";
   let data = null, request = null, text = "", utterance = null;
+  let cloud = false, voiceRequest = null, audio = null, audioURL = null;
+  let cachedAudio = null;
+  fetch("/api/voice").then(r => r.ok ? r.json() : {}).then(config => {
+    cloud = config.configured === true;
+    listen.disabled = !text || (!supported && !cloud);
+    if (cloud && !supported && !text) status.textContent = "";
+  }).catch(() => {});
 
   function stop() {
+    voiceRequest?.abort(); voiceRequest = null;
+    if (audio) { audio.onended = audio.onerror = null; audio.pause(); audio.removeAttribute("src"); audio.load(); audio = null; }
+    if (audioURL) { URL.revokeObjectURL(audioURL); audioURL = null; }
     const active = utterance;
     utterance = null;
     if (active) { active.onend = active.onerror = null; speech.cancel(); }
@@ -18,14 +28,15 @@ export function initSummary() {
     listen.setAttribute("aria-pressed", "false");
   }
   function show(value, label) {
+    cachedAudio = null;
     text = value;
     output.textContent = value;
     source.textContent = label;
-    listen.disabled = !supported;
+    listen.disabled = !supported && !cloud;
   }
   function reset(input) {
     request?.abort(); request = null;
-    stop(); text = "";
+    stop(); text = ""; cachedAudio = null;
     data = input ? summaryInput(input) : null;
     button.disabled = !data;
     button.textContent = "AI summary";
@@ -33,7 +44,7 @@ export function initSummary() {
     listen.disabled = true;
     source.textContent = "";
     output.textContent = data ? "Get a short overview of current conditions and the next 24 hours." : "Load a city’s conditions to create a summary.";
-    status.textContent = supported ? "" : "Spoken playback is unavailable in this browser. You can still read the summary.";
+    status.textContent = supported || cloud ? "" : "Spoken playback is unavailable in this browser. You can still read the summary.";
   }
   button.addEventListener("click", async () => {
     if (!data || request) return;
@@ -67,9 +78,8 @@ export function initSummary() {
       }
     }
   });
-  listen.addEventListener("click", () => {
-    if (utterance) { stop(); status.textContent = "Playback stopped."; return; }
-    if (!text || !supported) return;
+  function browserPlayback(fallback = false) {
+    if (!supported) { status.textContent = "Voice is unavailable. You can still read the summary."; return; }
     const reading = new SpeechSynthesisUtterance(text);
     utterance = reading;
     reading.lang = "en";
@@ -80,10 +90,43 @@ export function initSummary() {
     reading.onerror = () => { if (utterance === reading) { stop(); status.textContent = "Playback unavailable. Please read the summary or try again."; } };
     listen.textContent = "Stop reading";
     listen.setAttribute("aria-pressed", "true");
-    status.textContent = "Reading summary aloud…";
+    status.textContent = fallback ? "Voice service unavailable. Reading with browser voice…" : "Reading summary aloud…";
     try { speech.speak(reading); } catch { reading.onerror(); }
+  }
+  listen.addEventListener("click", async () => {
+    if (utterance || voiceRequest || audio) { stop(); status.textContent = "Playback stopped."; return; }
+    if (!text) return;
+    if (!cloud) { browserPlayback(); return; }
+    const controller = new AbortController(); voiceRequest = controller;
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    listen.textContent = "Stop reading";
+    listen.setAttribute("aria-pressed", "true");
+    status.textContent = "Preparing smallest.ai voice…";
+    try {
+      if (!cachedAudio) {
+        const response = await fetch("/api/voice", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }), signal: controller.signal });
+        if (!response.ok || !response.headers.get("content-type")?.startsWith("audio/")) throw new Error();
+        const blob = await response.blob();
+        if (voiceRequest !== controller) return;
+        if (!blob.size || blob.size > 8 * 1024 * 1024) throw new Error();
+        cachedAudio = blob;
+      }
+      if (voiceRequest !== controller) return;
+      audioURL = URL.createObjectURL(cachedAudio);
+      const player = new Audio(audioURL); audio = player;
+      player.onended = () => { if (audio === player) { stop(); status.textContent = "Playback finished."; } };
+      player.onerror = () => { if (audio === player) { stop(); cachedAudio = null; browserPlayback(true); } };
+      await player.play();
+      if (voiceRequest === controller) status.textContent = "Reading with smallest.ai voice…";
+    } catch {
+      if (voiceRequest === controller) { stop(); browserPlayback(true); }
+    } finally {
+      clearTimeout(timeout);
+      if (voiceRequest === controller) voiceRequest = null;
+    }
   });
-  document.addEventListener("visibilitychange", () => { if (document.hidden && utterance) { stop(); status.textContent = "Playback stopped."; } });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && (utterance || audio || voiceRequest)) { stop(); status.textContent = "Playback stopped."; } });
   window.addEventListener("pagehide", () => { request?.abort(); stop(); });
   reset(null);
   return { reset };
