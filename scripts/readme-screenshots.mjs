@@ -1,0 +1,32 @@
+import { chromium } from "playwright";
+import { mkdir } from "node:fs/promises";
+const out = "docs/images";
+await mkdir(out, { recursive: true });
+const browser = await chromium.launch({ channel: process.env.BROWSER_CHANNEL || "chrome", headless: true });
+const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, reducedMotion: "reduce" });
+const page = await context.newPage();
+try {
+  await page.goto(process.env.BASE_URL || "http://127.0.0.1:5173");
+  await page.locator("#demo-toggle").click();
+  await page.waitForFunction(() => document.querySelector("#mode-badge").textContent === "Demo data");
+  await page.screenshot({ path: `${out}/dashboard.png` });
+  await page.locator("#forecast").screenshot({ path: `${out}/planner.png` });
+  await page.locator(".profile-open").first().click();
+  await page.locator("#profile-dialog").screenshot({ path: `${out}/profile.png` });
+  await page.keyboard.press("Escape");
+  const response = page.waitForResponse(r => r.url().endsWith("/api/summary"));
+  await page.locator("#generate-summary").click();
+  const summary = await (await response).json();
+  if (summary.source !== "ai") throw new Error("A real generated summary is required for this screenshot.");
+  await page.waitForFunction(() => document.querySelector("#summary-source").textContent === "AI-generated summary");
+  const voiceResponse = page.waitForResponse(r => r.url().endsWith("/api/voice") && r.request().method() === "POST");
+  await page.locator("#listen-summary").click();
+  if (!(await voiceResponse).ok()) throw new Error("Real voice playback unavailable.");
+  await page.waitForFunction(() => document.querySelector("#summary-status").textContent.includes("Reading with smallest.ai"));
+  await page.locator("#ai-summary").screenshot({ path: `${out}/summary-voice.png` });
+  await page.locator("#listen-summary").click();
+  await page.setViewportSize({ width: 390, height: 1000 });
+  await page.locator("#ai-summary").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${out}/mobile.png` });
+  console.log("Saved five app screenshots using illustrative demo data; no account or configuration screens captured.");
+} finally { await browser.close(); }

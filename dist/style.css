@@ -19,6 +19,14 @@
   line-height: 1.5;
   color-scheme: light;
 }
+.panel.summary-panel { margin-block: 20px; border-left: 3px solid var(--teal); }
+.summary-heading { flex-wrap: wrap; gap: 16px; }
+.summary-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.summary-actions .button { min-height: 44px; }
+.summary-actions .button:disabled { cursor: not-allowed; }
+.summary-source { color: var(--teal-dark); font-size: 12px; font-weight: 700; }
+.summary-source:empty { display: none; }
+.summary-copy { max-width: 90ch; line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; }
 * {
   box-sizing: border-box;
 }

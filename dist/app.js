@@ -22,6 +22,10 @@ import {
   renderChart,
   downloadCSV,
 } from "./chart.js";
+import { initAuth } from "./auth.js";
+import { initSummary } from "./summary.js";
+
+const summary = initSummary();
 
 const $ = (selector) => document.querySelector(selector);
 const state = {
@@ -132,6 +136,7 @@ async function load() {
 }
 
 function clearData(loading) {
+  summary.reset(null);
   for (const id of [
     "aqi",
     "temperature",
@@ -220,6 +225,11 @@ function render() {
   $("#header-profile").textContent = profileName;
   $("#profile-summary").textContent =
     `${profileName} · ${activityNames[activity]}${sensitive(profile) ? " · extra precautions applied" : ""}`;
+  summary.reset({
+    city: [city.name, city.country].filter(Boolean).join(", ").slice(0, 100),
+    activity, demo: state.demo, current: c,
+    hours: hours.filter(h => h.time >= c.time).slice(0, 24),
+  });
 }
 
 function renderTrend() {
@@ -575,4 +585,10 @@ new ResizeObserver((entries) => {
     renderTrend();
   }
 }).observe($("#chart"));
+window.addEventListener("aqility:signedout", () => {
+  state.profile = { age: "adult" };
+  $("#profile-form").reset();
+  render();
+});
+initAuth();
 load();

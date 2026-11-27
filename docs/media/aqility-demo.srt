@@ -1,0 +1,131 @@
+1
+00:00:00,160 --> 00:00:01,440
+Before you step outside,
+
+2
+00:00:01,440 --> 00:00:02,660
+know what you're breathing.
+
+3
+00:00:02,720 --> 00:00:03,940
+Meet Aqility.
+
+4
+00:00:04,400 --> 00:00:06,240
+See air quality, temperature,
+
+5
+00:00:06,240 --> 00:00:07,440
+and pollution together.
+
+6
+00:00:07,440 --> 00:00:09,120
+This walkthrough uses clearly
+
+7
+00:00:09,120 --> 00:00:10,540
+labeled demo data.
+
+8
+00:00:11,060 --> 00:00:12,180
+Set a health profile
+
+9
+00:00:12,180 --> 00:00:13,480
+to adjust precautions.
+
+10
+00:00:13,540 --> 00:00:14,660
+Your health details stay
+
+11
+00:00:14,660 --> 00:00:16,040
+in this browser tab.
+
+12
+00:00:16,260 --> 00:00:17,620
+Compare the next twenty-four
+
+13
+00:00:17,620 --> 00:00:19,300
+hours, switch your activity,
+
+14
+00:00:19,300 --> 00:00:20,580
+and inspect the forecast
+
+15
+00:00:20,580 --> 00:00:21,995
+before planning your day.
+
+16
+00:00:22,255 --> 00:00:23,455
+Need the big picture?
+
+17
+00:00:23,455 --> 00:00:24,915
+Tap AI summary.
+
+18
+00:00:24,975 --> 00:00:26,815
+GPT-5 Nano turns the
+
+19
+00:00:26,815 --> 00:00:27,715
+readings into a short
+
+20
+00:00:27,855 --> 00:00:28,675
+briefing.
+
+21
+00:00:28,895 --> 00:00:30,195
+Then tap listen.
+
+22
+00:00:30,415 --> 00:00:31,695
+Smallest AI reads the
+
+23
+00:00:31,695 --> 00:00:32,595
+briefing aloud.
+
+24
+00:00:32,735 --> 00:00:33,875
+Stop playback at any
+
+25
+00:00:33,935 --> 00:00:34,355
+time.
+
+26
+00:00:34,495 --> 00:00:36,115
+New Delhi, India, 23:00
+
+27
+00:00:36,255 --> 00:00:37,615
+city local time, US
+
+28
+00:00:37,615 --> 00:00:38,595
+AQI 98.
+
+29
+00:00:39,055 --> 00:00:40,275
+Know your air, plan
+
+30
+00:00:40,415 --> 00:00:42,035
+your day, Aqility.
+
+31
+00:00:42,095 --> 00:00:43,775
+Check local advisories.
+
+32
+00:00:43,775 --> 00:00:45,055
+This is planning support,
+
+33
+00:00:45,055 --> 00:00:46,075
+not medical advice.
