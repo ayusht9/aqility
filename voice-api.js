@@ -1,3 +1,4 @@
+import { sendJson, validateJsonRequest, readJsonBody, BodyTooLargeError, createRequestLimiter } from "./lib/http.js";
 export async function synthesizeVoice(text, { env = process.env, fetcher = fetch } = {}) {
   if (typeof text !== "string" || !text.trim() || text.length > 2000)
     throw new Error("Invalid voice text");
@@ -23,42 +24,31 @@ export async function synthesizeVoice(text, { env = process.env, fetcher = fetch
   return audio;
 }
 
-const limits = new Map();
-let active = 0;
+const limiter = createRequestLimiter();
 export async function handleVoice(req, res) {
-  const send = (code, value) => {
-    res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
-    res.end(JSON.stringify(value));
-  };
+  const send = (code, value) => sendJson(res, code, value);
   if (req.method === "GET") return send(200, { configured: !!process.env.SMALLEST_API_KEY });
   if (req.method !== "POST") { res.setHeader("Allow", "GET, POST"); return send(405, { error: "Use POST." }); }
-  if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`)
-    return send(403, { error: "Origin not allowed." });
-  if (req.headers["content-type"]?.split(";")[0] !== "application/json") return send(415, { error: "Use JSON." });
-  const now = Date.now(), key = req.socket.remoteAddress;
-  for (const [ip, entry] of limits) if (entry.until <= now) limits.delete(ip);
-  const entry = limits.get(key) || { count: 0, until: now + 60000 };
-  if (entry.count >= 10 || active >= 3 || (!limits.has(key) && limits.size >= 1000)) {
-    res.setHeader("Retry-After", "60"); return send(429, { error: "Please try again shortly." });
+  if (!validateJsonRequest(req, res)) return;
+  const release = limiter.acquire(req.socket.remoteAddress);
+  if (!release) {
+    res.setHeader("Retry-After", "60");
+    return send(429, { error: "Please try again shortly." });
   }
-  entry.count++; limits.set(key, entry); active++;
   try {
-    const chunks = []; let size = 0;
-    for await (const chunk of req) {
-      size += chunk.length;
-      if (size > 12000) return send(413, { error: "Voice text is too large." });
-      chunks.push(chunk);
-    }
     let text;
     try {
-      text = JSON.parse(Buffer.concat(chunks).toString("utf8")).text;
+      text = (await readJsonBody(req, 12000))?.text;
       if (typeof text !== "string" || !text.trim() || text.length > 2000) throw new Error();
-    } catch { return send(400, { error: "Invalid voice text." }); }
+    } catch (error) {
+      if (error instanceof BodyTooLargeError) return send(413, { error: "Voice text is too large." });
+      return send(400, { error: "Invalid voice text." });
+    }
     const audio = await synthesizeVoice(text);
     if (!audio) return send(503, { error: "Voice service is not configured." });
     res.writeHead(200, { "Content-Type": "audio/wav", "Content-Length": audio.length,
       "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
     res.end(audio);
   } catch { send(502, { error: "Voice service is unavailable. Try browser playback." }); }
-  finally { active--; }
+  finally { release(); }
 }

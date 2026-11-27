@@ -44,6 +44,10 @@ test("voice endpoint exposes configuration status only and validates requests", 
     assert.equal((await post("{}", { Origin: "https://other.example" })).status, 403);
     assert.equal((await post("{}", { "Content-Type": "text/plain" })).status, 415);
     assert.equal((await post("not json")).status, 400);
+    assert.equal((await post("null")).status, 400);
+    const typed = await post("{}", { "Content-Type": "Application/JSON; charset=utf-8" });
+    assert.equal(typed.status, 400);
+    assert.equal(typed.headers.get("cache-control"), "no-store");
     assert.equal((await post(JSON.stringify({ text: "x".repeat(2001) }))).status, 400);
     assert.equal((await post("x".repeat(12001))).status, 413);
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }

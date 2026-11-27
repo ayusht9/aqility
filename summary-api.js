@@ -1,3 +1,4 @@
+import { sendJson, validateJsonRequest, readJsonBody, BodyTooLargeError, createRequestLimiter } from "./lib/http.js";
 import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { summaryInput, localSummary } from "./dist/summary-data.js";
@@ -30,35 +31,22 @@ export async function createSummary(input, { env = process.env, generate = gener
   }
 }
 
-const limits = new Map();
-let active = 0;
+const limiter = createRequestLimiter();
 export async function handleSummary(req, res) {
-  const send = (code, value) => {
-    res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
-    res.end(JSON.stringify(value));
-  };
+  const send = (code, value) => sendJson(res, code, value);
   if (req.method !== "POST") { res.setHeader("Allow", "POST"); return send(405, { error: "Use POST." }); }
-  if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`)
-    return send(403, { error: "Origin not allowed." });
-  if (req.headers["content-type"]?.split(";")[0] !== "application/json")
-    return send(415, { error: "Use JSON." });
-  const now = Date.now(), key = req.socket.remoteAddress;
-  for (const [ip, value] of limits) if (value.until <= now) limits.delete(ip);
-  const entry = limits.get(key) || { count: 0, until: now + 60000 };
-  if (entry.count >= 10 || active >= 3 || (!limits.has(key) && limits.size >= 1000)) {
-    res.setHeader("Retry-After", "60"); return send(429, { error: "Please try again shortly." });
+  if (!validateJsonRequest(req, res)) return;
+  const release = limiter.acquire(req.socket.remoteAddress);
+  if (!release) {
+    res.setHeader("Retry-After", "60");
+    return send(429, { error: "Please try again shortly." });
   }
-  entry.count++; limits.set(key, entry);
-  active++;
   try {
-    const chunks = []; let size = 0;
-    for await (const chunk of req) {
-      size += chunk.length;
-      if (size > 16000) return send(413, { error: "Summary data is too large." });
-      chunks.push(chunk);
-    }
-    const input = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    const input = await readJsonBody(req, 16000);
     send(200, await createSummary(input));
-  } catch { send(400, { error: "Invalid summary data." }); }
-  finally { active--; }
+  } catch (error) {
+    if (error instanceof BodyTooLargeError) return send(413, { error: "Summary data is too large." });
+    send(400, { error: "Invalid summary data." });
+  }
+  finally { release(); }
 }
