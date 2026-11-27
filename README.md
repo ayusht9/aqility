@@ -5,7 +5,7 @@
 # Aqility
 
 **Know your air. Plan your day.**<br>
-Air-quality insights, outdoor planning, AI summaries, and spoken briefings in one dashboard.
+Air-quality insights, low-emission routines, indoor-air tips, and spoken AI briefings in one dashboard.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-103d43)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%E2%89%A522.12-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -17,7 +17,7 @@ Air-quality insights, outdoor planning, AI summaries, and spoken briefings in on
 
 [**Live app on Vercel**](https://aqility.vercel.app) ·
 [ChatGPT-hosted preview](https://aqility-air-companion.afloatsesame32.chatgpt.site) ·
-[Watch the demo](https://raw.githubusercontent.com/ayusht9/aqility/dev/docs/media/aqility-demo.mp4) ·
+[Watch the demo](https://raw.githubusercontent.com/ayusht9/aqility/main/docs/media/aqility-demo.mp4) ·
 [Quick start](#quick-start) ·
 [Screenshots](#screenshots) ·
 [Development guide](docs/DEVELOPMENT.md)
@@ -26,7 +26,7 @@ Air-quality insights, outdoor planning, AI summaries, and spoken briefings in on
 
 </div>
 
-Aqility brings modeled US AQI and weather together with a 24-hour outdoor planner, optional personal precautions, and an AI-generated briefing you can read or listen to.
+Aqility was built for **PromptWars: Virtual by Hack2skill**. It connects modeled US AQI and weather with practical daily choices: lower-emission travel, cleaner indoor-air habits, and a 24-hour outdoor planner. Choose a commute, home, family, or community routine, see why each action fits, and hear the plan as an AI-generated briefing.
 
 The [Vercel deployment](https://aqility.vercel.app) serves the released app with AI summaries and cloud voice. The ChatGPT-hosted link is an earlier published preview and may differ from `dev`. Server API keys are configured separately for each deployment.
 
@@ -73,11 +73,13 @@ Health fields stay in memory in the browser tab. They are excluded from authenti
 
 ## Demo video
 
-[![Watch the 47-second horizontal Aqility demo](docs/images/demo-cover.png)](https://raw.githubusercontent.com/ayusht9/aqility/dev/docs/media/aqility-demo.mp4)
+[![Watch the 55-second horizontal Aqility demo](docs/images/demo-cover.png)](https://raw.githubusercontent.com/ayusht9/aqility/main/docs/media/aqility-demo.mp4)
 
 **[Watch or download the video](docs/media/aqility-demo.mp4)** · [Download subtitles](docs/media/aqility-demo.srt)
 
-A 47-second horizontal 1080p walkthrough with original illustrations, actual app interactions, live AI generation, smallest.ai narration, and highlighted captions. Environmental data is labeled as illustrative. Audio contains narration and an app voice excerpt, with no background music or hum. See [reproduction steps](docs/DEVELOPMENT.md#demo-video).
+[LinkedIn post draft](docs/media/linkedin-post.txt)
+
+A 55-second horizontal 1080p walkthrough of the updated app: change the daily routine, inspect lower-emission alternatives and indoor-air tips, read why each action fits and how it helps, compare forecast hours, and generate a spoken AI briefing. The film includes original illustrations, real app interactions, genuine GPT-5 nano generation, smallest.ai narration, and highlighted captions. Environmental data is labeled as illustrative. Audio contains narration and an app voice excerpt, with no background music or hum. See [reproduction steps](docs/DEVELOPMENT.md#demo-video).
 
 ## Quick start
 

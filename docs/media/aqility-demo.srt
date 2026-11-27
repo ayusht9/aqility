@@ -1,131 +1,163 @@
 1
-00:00:00,160 --> 00:00:01,440
-Before you step outside,
+00:00:00,080 --> 00:00:01,120
+Air quality is only
 
 2
-00:00:01,440 --> 00:00:02,660
-know what you're breathing.
+00:00:01,120 --> 00:00:02,560
+the start, Aqility helps
 
 3
-00:00:02,720 --> 00:00:03,940
-Meet Aqility.
+00:00:02,560 --> 00:00:03,520
+you choose what to
 
 4
-00:00:04,400 --> 00:00:06,240
-See air quality, temperature,
+00:00:03,520 --> 00:00:04,300
+do next.
 
 5
-00:00:06,240 --> 00:00:07,440
-and pollution together.
+00:00:04,835 --> 00:00:05,955
+See your city's air
 
 6
-00:00:07,440 --> 00:00:09,120
-This walkthrough uses clearly
+00:00:05,955 --> 00:00:07,075
+quality and weather.
 
 7
-00:00:09,120 --> 00:00:10,540
-labeled demo data.
+00:00:07,075 --> 00:00:08,675
+This walkthrough uses clearly
 
 8
-00:00:11,060 --> 00:00:12,180
-Set a health profile
+00:00:08,675 --> 00:00:10,175
+labeled demo data.
 
 9
-00:00:12,180 --> 00:00:13,480
-to adjust precautions.
+00:00:10,640 --> 00:00:12,400
+Choose your routine, commuting,
 
 10
-00:00:13,540 --> 00:00:14,660
-Your health details stay
+00:00:12,400 --> 00:00:13,920
+staying home, family trips,
 
 11
-00:00:14,660 --> 00:00:16,040
-in this browser tab.
+00:00:13,920 --> 00:00:15,460
+or community activities.
 
 12
-00:00:16,260 --> 00:00:17,620
-Compare the next twenty-four
+00:00:15,840 --> 00:00:17,680
+Get lower emission alternatives
 
 13
-00:00:17,620 --> 00:00:19,300
-hours, switch your activity,
+00:00:17,680 --> 00:00:19,060
+and indoor air tips.
 
 14
-00:00:19,300 --> 00:00:20,580
-and inspect the forecast
+00:00:19,120 --> 00:00:20,260
+Every card explains why
 
 15
-00:00:20,580 --> 00:00:21,995
-before planning your day.
+00:00:20,320 --> 00:00:21,120
+it fits and how
 
 16
-00:00:22,255 --> 00:00:23,455
-Need the big picture?
+00:00:21,120 --> 00:00:22,260
+your choice can help.
 
 17
-00:00:23,455 --> 00:00:24,915
-Tap AI summary.
+00:00:22,320 --> 00:00:23,600
+Health details stay in
 
 18
-00:00:24,975 --> 00:00:26,815
-GPT-5 Nano turns the
+00:00:23,600 --> 00:00:24,420
+your browser.
 
 19
-00:00:26,815 --> 00:00:27,715
-readings into a short
+00:00:24,720 --> 00:00:26,080
+Compare the next twenty-four
 
 20
-00:00:27,855 --> 00:00:28,675
-briefing.
+00:00:26,080 --> 00:00:27,520
+hours and check precautions
 
 21
-00:00:28,895 --> 00:00:30,195
-Then tap listen.
+00:00:27,520 --> 00:00:28,670
+before choosing an outdoor
 
 22
-00:00:30,415 --> 00:00:31,695
-Smallest AI reads the
+00:00:28,670 --> 00:00:29,340
+activity.
 
 23
-00:00:31,695 --> 00:00:32,595
-briefing aloud.
+00:00:29,885 --> 00:00:32,305
+Tap AI summary, GPT-5
 
 24
-00:00:32,735 --> 00:00:33,875
-Stop playback at any
+00:00:32,365 --> 00:00:33,885
+Nano turns conditions and
 
 25
-00:00:33,935 --> 00:00:34,355
-time.
+00:00:33,885 --> 00:00:35,165
+your action plan into
 
 26
-00:00:34,495 --> 00:00:36,115
-New Delhi, India, 23:00
+00:00:35,165 --> 00:00:36,465
+a clear briefing.
 
 27
-00:00:36,255 --> 00:00:37,615
-city local time, US
+00:00:36,605 --> 00:00:37,645
+Tap listen to hear
 
 28
-00:00:37,615 --> 00:00:38,595
-AQI 98.
+00:00:37,645 --> 00:00:38,605
+the briefing with smallest
 
 29
-00:00:39,055 --> 00:00:40,275
-Know your air, plan
+00:00:38,605 --> 00:00:39,025
+AI.
 
 30
-00:00:40,415 --> 00:00:42,035
-your day, Aqility.
+00:00:39,245 --> 00:00:40,545
+Stop whenever you need.
 
 31
-00:00:42,095 --> 00:00:43,775
-Check local advisories.
+00:00:40,685 --> 00:00:42,285
+Illustrative demo data.
 
 32
-00:00:43,775 --> 00:00:45,055
-This is planning support,
+00:00:42,285 --> 00:00:43,725
+New Delhi, India shows
 
 33
-00:00:45,055 --> 00:00:46,075
-not medical advice.
+00:00:43,725 --> 00:00:45,965
+US AQI 92, moderate,
+
+34
+00:00:45,965 --> 00:00:47,105
+at 12 a.m.
+
+35
+00:00:47,165 --> 00:00:49,005
+Built for Hack2skill PromptWars
+
+36
+00:00:49,005 --> 00:00:49,665
+virtual.
+
+37
+00:00:49,725 --> 00:00:50,785
+Know your air, plan
+
+38
+00:00:50,925 --> 00:00:51,905
+your day, check local
+
+39
+00:00:52,045 --> 00:00:53,005
+advisories.
+
+40
+00:00:53,005 --> 00:00:53,665
+This is not medical
+
+41
+00:00:53,885 --> 00:00:54,505
+advice.

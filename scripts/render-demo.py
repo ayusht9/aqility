@@ -1,9 +1,9 @@
 """Render a horizontal product film from actual app footage and original illustrations."""
-import json, math, subprocess, wave, sys
+import json, math, subprocess, wave, sys, os
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-OUT = Path("exports/demo-video").resolve()
+OUT = Path(os.environ.get("DEMO_OUTPUT_DIR", "exports/demo-video")).resolve()
 W, H, FPS = 1920, 1080, 30
 TEAL, LIME, INK, MUTED = "#17c9b1", "#d3fa72", "#071d26", "#9fb8bc"
 FONT = "C:/Windows/Fonts/seguisb.ttf"
@@ -14,6 +14,7 @@ for scene in scenes:
     if scene["id"] == "overview": scene["title"] = "Your air.\nAt a glance."
     if scene["id"] == "planner": scene["title"] = "Plan your\nnext move."
     if scene["id"] == "voice": scene["title"] = "Press play.\nHear your air."
+    if scene["id"] == "impact": scene["title"] = "Your choices.\nTheir impact."
 capture = json.loads((OUT / "capture.json").read_text())
 shots = {s["id"]: s for s in capture["shots"]}
 
@@ -89,11 +90,11 @@ def background(scene, index):
             d.text((73, 230 + n*114), line, font=font(102, True), fill="white" if n == 0 else LIME)
         art = illustration(1000, 650)
         im.paste(art, (840, 225), art)
-        d.text((83, 530), "Air quality  /  Outdoor planning", font=font(27), fill="#c6dada")
-        d.text((83, 578), "AI summaries  /  Spoken briefings", font=font(27), fill="#c6dada")
+        d.text((83, 530), "Low-emission choices  /  Indoor-air tips", font=font(27), fill="#c6dada")
+        d.text((83, 578), "Personal routines  /  AI voice briefings", font=font(27), fill="#c6dada")
         d.rounded_rectangle((80, 700, 710, 782), radius=18, fill=LIME)
         d.text((108, 716), "MEET YOUR AIR COMPANION" if index == 0 else "MAKE YOUR NEXT MOVE INFORMED", font=font(25, True), fill=INK)
-        d.text((85, 815), "Illustrations + actual working app", font=font(23), fill=MUTED)
+        d.text((85, 815), "PromptWars: Virtual  /  Hack2skill", font=font(23), fill=MUTED)
     else:
         num = index
         d.rounded_rectangle((75, 170, 165, 212), radius=20, fill="#224a4d")
@@ -105,6 +106,8 @@ def background(scene, index):
         notes = {
             "overview": ["AQI + weather + pollutants", "A clearer starting point."],
             "profile": ["Profile stays in your tab", "Extra precautions when needed."],
+            "routine": ["Commute / Home / Family / Community", "A plan that fits your daily routine."],
+            "impact": ["Why this fits. How it helps.", "Source-linked practical guidance."],
             "planner": ["24-hour outdoor outlook", "Compare hours. Choose activity."],
             "summary": ["Generated with GPT-5 nano", "Your readings. Plain language."],
             "voice": ["Powered by smallest.ai", "Listen. Replay. Stop anytime."],
@@ -123,9 +126,9 @@ def background(scene, index):
     # Caption backing and editorial footer keep captions out of the product UI.
     d.rounded_rectangle((100, 939, 1820, 1030), radius=20, fill="#03141c")
     d.text((72, 1043), "Planning support, not medical advice. Check local advisories.", font=font(17), fill="#8da9af")
-    d.text((1574, 1043), f"AQILITY  /  0{index+1} OF 07", font=font(17, True), fill=MUTED)
+    d.text((1574, 1043), f"AQILITY  /  {index+1:02d} OF {len(scenes):02d}", font=font(17, True), fill=MUTED)
     d.line((70, 1072, 1850, 1072), fill="#25454e", width=4)
-    d.line((70, 1072, 70 + round(1780*(index+1)/7), 1072), fill=LIME, width=4)
+    d.line((70, 1072, 70 + round(1780*(index+1)/len(scenes)), 1072), fill=LIME, width=4)
     path = OUT / f"{scene['id']}-design.png"; im.save(path)
     return path
 
@@ -137,7 +140,7 @@ for index, scene in enumerate(scenes):
     if ident == "voice":
         voice = OUT / "voice-with-app.wav"
         run(["ffmpeg", "-y", "-v", "error", "-i", OUT / "voice.wav", "-i", OUT / "app-voice.wav",
-             "-filter_complex", "[0:a]apad=pad_dur=0.25[a];[1:a]atrim=0:4,afade=t=out:st=3.6:d=0.4[b];[a][b]concat=n=2:v=0:a=1[out]", "-map", "[out]", voice])
+             "-filter_complex", "[0:a]apad=pad_dur=0.25[a];[1:a]atrim=0:6,afade=t=out:st=5.7:d=0.3[b];[a][b]concat=n=2:v=0:a=1[out]", "-map", "[out]", voice])
     dur = duration(voice) + 0.45
     timeline.append({**scene, "start": elapsed, "duration": dur, "audio": str(voice)})
     elapsed += dur

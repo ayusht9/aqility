@@ -2,35 +2,42 @@ import { chromium } from "playwright";
 import { mkdir, writeFile, readFile, access } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { synthesizeVoice } from "../voice-api.js";
+import { createHash } from "node:crypto";
 
-const out = resolve("exports/demo-video");
+const out = resolve(process.env.DEMO_OUTPUT_DIR || "exports/demo-video");
 await mkdir(out, { recursive: true });
 const exists = path => access(path).then(() => true, () => false);
 const scenes = [
-  { id: "intro", title: "Before you\nstep outside.", text: "Before you step outside, know what you're breathing. Meet Aqility." },
-  { id: "overview", title: "Your environment.\nOne clear view.", text: "See air quality, temperature, and pollution together. This walkthrough uses clearly labeled demo data." },
-  { id: "profile", title: "Precautions\nthat fit you.", text: "Set a health profile to adjust precautions. Your health details stay in this browser tab." },
-  { id: "planner", title: "Find your\noutdoor window.", text: "Compare the next twenty four hours. Switch your activity and inspect the forecast before planning your day." },
-  { id: "summary", title: "Less reading.\nMore clarity.", text: "Need the big picture? Tap A I summary. G P T five nano turns the readings into a short briefing." },
-  { id: "voice", title: "Press play.\nHear your briefing.", text: "Then tap Listen. Smallest A I reads the briefing aloud. Stop playback at any time." },
-  { id: "outro", title: "Know your air.\nPlan your day.", text: "Know your air. Plan your day. Aqility. Check local advisories. This is planning support, not medical advice." },
+  { id: "intro", title: "Your air.\nYour next move.", text: "Air quality is only the start. Aqility helps you choose what to do next." },
+  { id: "overview", title: "Your air.\nAt a glance.", text: "See your city's air quality and weather. This walkthrough uses clearly labeled demo data." },
+  { id: "routine", title: "Your day.\nYour routine.", text: "Choose your routine: commuting, staying home, family trips, or community activities." },
+  { id: "impact", title: "Small choices.\nClearer impact.", text: "Get lower emission alternatives and indoor air tips. Every card explains why it fits and how your choice can help. Health details stay in your browser." },
+  { id: "planner", title: "Plan your\nnext move.", text: "Compare the next twenty four hours, and check precautions before choosing an outdoor activity." },
+  { id: "summary", title: "Clear actions.\nSimple words.", text: "Tap A I summary. G P T five nano turns conditions and your action plan into a clear briefing." },
+  { id: "voice", title: "Press play.\nHear your air.", text: "Tap Listen to hear the briefing with Smallest A I. Stop whenever you need." },
+  { id: "outro", title: "Know your air.\nPlan your day.", text: "Built for Hack two skill Prompt Wars Virtual. Know your air. Plan your day. Check local advisories; this is not medical advice." },
 ];
 await writeFile(join(out, "storyboard.json"), JSON.stringify(scenes, null, 2));
 
 async function narration() {
+  const manifestPath = join(out, "narration-cache.json");
+  const manifest = await exists(manifestPath) ? JSON.parse(await readFile(manifestPath, "utf8")) : {};
   for (const scene of scenes) {
     const file = join(out, `${scene.id}.wav`);
-    if (await exists(file)) continue;
+    const signature = createHash("sha256").update(JSON.stringify({ text: scene.text, voice: process.env.SMALLEST_VOICE_ID || "meher", model: "lightning_v3.1_pro" })).digest("hex");
+    if (await exists(file) && manifest[scene.id] === signature) continue;
     const audio = await synthesizeVoice(scene.text);
     if (!audio) throw new Error("Set SMALLEST_API_KEY in .env for the video voiceover.");
     await writeFile(file, audio);
+    manifest[scene.id] = signature;
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
     console.log(`Voiceover ready: ${scene.id}`);
   }
 }
 async function capture() {
   if (await exists(join(out, "capture.json"))) {
     const previous = JSON.parse(await readFile(join(out, "capture.json"), "utf8"));
-    if (previous.format === "landscape") { console.log("Reusing existing landscape app recording."); return; }
+    if (previous.format === "landscape" && previous.storyVersion === 2) { console.log("Reusing updated landscape app recording."); return; }
   }
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 },
@@ -69,10 +76,19 @@ async function capture() {
     await page.waitForFunction(() => document.querySelector("#mode-badge").textContent === "Demo data");
     await page.locator(".metrics").scrollIntoViewIfNeeded();
     await shot("overview", async () => { await wait(1700); await page.mouse.wheel(0, 220); await wait(1700); await page.mouse.wheel(0, -150); await wait(1000); });
-    await shot("profile", async () => {
-      await click(".profile-open"); await wait(600);
-      await click('input[name="asthma"]'); await wait(1100);
-      await click('#profile-form button[type="submit"]'); await wait(1600);
+    await page.locator("#daily-plan").scrollIntoViewIfNeeded();
+    await shot("routine", async () => {
+      await wait(800);
+      for (const routine of ["home", "family", "community"]) {
+        await page.locator("#routine").selectOption(routine); await wait(1100);
+      }
+      await page.locator("#routine").selectOption("family"); await wait(1000);
+    });
+    await shot("impact", async () => {
+      await wait(1200);
+      await page.mouse.wheel(0, 170); await wait(1800);
+      await page.mouse.move(950, 590, { steps: 20 }); await wait(1000);
+      await page.mouse.wheel(0, -120); await wait(1300);
     });
     await page.locator("#forecast").scrollIntoViewIfNeeded();
     await shot("planner", async () => {
@@ -100,7 +116,7 @@ async function capture() {
     });
     await context.close();
     const path = await video.path();
-    await writeFile(join(out, "capture.json"), JSON.stringify({ video: path, shots, format: "landscape",
+    await writeFile(join(out, "capture.json"), JSON.stringify({ video: path, shots, format: "landscape", storyVersion: 2, origin: process.env.BASE_URL || "http://127.0.0.1:5173",
       realAI: true, realCloudVoice: true, environment: "Illustrative demo data", summary: generated.summary }, null, 2));
   } finally { await browser.close(); }
 }

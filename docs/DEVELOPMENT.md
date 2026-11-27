@@ -53,7 +53,7 @@ For browser regression checks, run `npm install`, keep `npm start` running, then
 
 ## Demo video
 
-The horizontal product film is exported locally to `exports/demo-video/aqility-demo-1080p.mp4` (1920×1080, H.264/AAC, 30 fps). The folder also contains an editable subtitle file, cover image, source footage, narration, and production notes; generated media is ignored by Git.
+The updated 55-second horizontal film demonstrates the cleaner-air action plan, daily-routine changes, impact explanations, outdoor planner, AI summaries, and real cloud voice. The latest production files are in `exports/demo-video/updated/`; copies are available at `exports/demo-video/aqility-demo-1080p.mp4` and in `docs/media/` (1920×1080, H.264/AAC, 30 fps). Generated media is ignored by Git except for the curated README assets in `docs/`.
 
 To reproduce it, keep `npm start` running, install FFmpeg and Python Pillow, and run these commands from the repository root:
 
@@ -64,7 +64,7 @@ python scripts/render-demo.py
 node --env-file=.env scripts/caption-demo.mjs
 ```
 
-Capture uses the actual app, genuine GPT-5 nano summaries, and smallest.ai playback with illustrative environmental demo data. Narration uses smallest.ai TTS; caption alignment requires Pulse speech-to-text access on the same key. API requests use provider credits. Existing media and timestamps are reused on reruns. To refresh a recording, move its generated `capture.json` aside first. Original vector-style illustrations accompany the footage. Audio contains only narration and the app voice excerpt, with no background bed or music.
+Capture uses the actual app, genuine GPT-5 nano summaries, and smallest.ai playback with illustrative environmental demo data. Narration uses smallest.ai TTS; caption alignment requires Pulse speech-to-text access on the same key. API requests use provider credits. Narration caches are checked against the script and voice; timestamp caches are checked against the audio hash. Set `DEMO_OUTPUT_DIR` consistently for all three scripts to use another output folder, and set `BASE_URL` to record a deployed version. To refresh a recording, move its generated `capture.json` aside first. Original vector-style illustrations accompany the footage. Audio contains only narration and the app voice excerpt, with no background bed or music.
 
 ## Features
 

@@ -1,33 +1,54 @@
 import { readFile, writeFile, access } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { spawnSync } from "node:child_process";
-const out = resolve("exports/demo-video");
+import { createHash } from "node:crypto";
+const out = resolve(process.env.DEMO_OUTPUT_DIR || "exports/demo-video");
 const timeline = JSON.parse(await readFile(join(out, "timeline.json"), "utf8"));
 const exists = path => access(path).then(() => true, () => false);
 const wordsFile = join(out, "word-timestamps.json");
 let words;
-if (await exists(wordsFile)) words = JSON.parse(await readFile(wordsFile, "utf8"));
-else {
+const narration = await readFile(join(out, "narration.wav"));
+const fingerprint = createHash("sha256").update(narration).digest("hex");
+if (await exists(wordsFile)) {
+  const cached = JSON.parse(await readFile(wordsFile, "utf8"));
+  if (cached.fingerprint === fingerprint) words = cached.words;
+}
+if (!words) {
   const response = await fetch("https://api.smallest.ai/waves/v1/stt/?model=pulse-pro&language=en&word_timestamps=true", {
     method: "POST", headers: { Authorization: `Bearer ${process.env.SMALLEST_API_KEY}`, "Content-Type": "application/octet-stream" },
-    body: await readFile(join(out, "narration.wav")), signal: AbortSignal.timeout(60000),
+    body: narration, signal: AbortSignal.timeout(60000),
   });
   if (!response.ok) throw new Error(`Caption alignment service returned ${response.status}; no credentials were logged.`);
   const result = await response.json();
   if (!result.words?.length) throw new Error("Caption alignment returned no word timestamps.");
   words = result.words;
-  await writeFile(wordsFile, JSON.stringify(words, null, 2));
+  await writeFile(wordsFile, JSON.stringify({ fingerprint, words }, null, 2));
 }
 words = words.filter(w => Number.isFinite(w.start) && Number.isFinite(w.end) && typeof w.word === "string");
-// Proofread the recognizer against the known narration script. The aligner
-// missed three sentence-final words; keep those spoken words in the captions.
-for (const [id, word] of [["overview", "data."], ["planner", "day."], ["outro", "advice."]]) {
-  const scene = timeline.find(s => s.id === id);
-  const inScene = words.filter(w => w.start >= scene.start - 0.03 && w.start < scene.start + scene.duration - 0.15);
+// Correct the event name without changing its spoken timing.
+for (let i = 0; i < words.length - 2; i++) {
+  if (/^hack$/i.test(words[i].word) && /^(to|two|2)$/i.test(words[i+1].word) && /^skill[,.]?$/i.test(words[i+2].word)) {
+    words.splice(i, 3, { word: "Hack2skill", start: words[i].start, end: words[i+2].end });
+  }
+  if (/^prompt$/i.test(words[i].word) && /^(was|wars)[,.]?$/i.test(words[i+1].word)) {
+    words.splice(i, 2, { word: "PromptWars", start: words[i].start, end: words[i+1].end });
+  }
+}
+// Preserve sentence-final narration words occasionally missed by the aligner.
+for (const scene of timeline) {
+  const word = scene.text.trim().split(/\s+/).at(-1);
+  let cutoff = scene.start + scene.duration - 0.15;
+  if (scene.id === "voice") {
+    const probe = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", "voice.wav"], { cwd: out, encoding: "utf8" });
+    if (probe.status !== 0) throw new Error("Could not inspect voice narration duration.");
+    cutoff = scene.start + Number(probe.stdout.trim()) + 0.1;
+  }
+  const inScene = words.filter(w => w.start >= scene.start - 0.03 && w.start < cutoff);
   const last = inScene.at(-1);
   if (last && !new RegExp(`^${word.replace('.', '')}[.!?,]?$`, 'i').test(last.word)) {
-    const end = Math.min(scene.start + scene.duration - 0.2, last.end + 0.6);
-    words.push({ word, start: last.end + 0.03, end });
+    const end = Math.min(cutoff, last.end + 0.6);
+    const start = Math.min(last.end + 0.03, cutoff - 0.1);
+    if (end > start) words.push({ word, start, end });
   }
 }
 words.sort((a, b) => a.start - b.start);
@@ -55,7 +76,7 @@ for (let i = 0; i < words.length;) {
   for (let j = 0; j < group.length; j++) {
     const next = j + 1 < group.length ? group[j+1].start : end;
     const text = group.map((w, n) => `${n === j ? "{\\c&H72FAD3&}" : "{\\c&HFFFFFF&}"}${clean(w.word).toUpperCase()}`).join(" ");
-    ass += `Dialogue: 0,${assTime(group[j].start)},${assTime(Math.max(next, group[j].start + 0.05))},Reels,,0,0,0,,{\\fad(35,35)\\fscx100\\fscy100}${text}\n`;
+    ass += `Dialogue: 0,${assTime(group[j].start)},${assTime(Math.max(next, group[j].start + 0.05))},Reels,,0,0,0,,${text}\n`;
   }
 }
 await writeFile(join(out, "captions.ass"), ass);
@@ -63,12 +84,12 @@ await writeFile(join(out, "aqility-demo.srt"), srt);
 const duration = timeline.at(-1).start + timeline.at(-1).duration;
 const ff = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", "uncaptioned.mp4",
   "-filter_complex", "[0:v]ass=captions.ass[v];[0:a]loudnorm=I=-16:TP=-1.5:LRA=9[a]",
-  "-map", "[v]", "-map", "[a]", "-t", String(duration), "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
+  "-map", "[v]", "-map", "[a]", "-t", String(duration), "-c:v", "libx264", "-preset", "fast", "-crf", "22", "-pix_fmt", "yuv420p",
   "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", "aqility-demo-1080p.mp4"], { cwd: out, encoding: "utf8" });
 if (ff.status !== 0) throw new Error(ff.stderr.slice(-3000));
 await writeFile(join(out, "production-notes.json"), JSON.stringify({ format: "1920x1080 landscape, H.264/AAC, 30 fps", duration,
   captions: "Burned-in word-highlight captions aligned with smallest.ai Pulse Pro word timestamps; editable SRT included",
-  footage: "Actual localhost app operation; illustrative environmental demo data; genuine GPT-5 nano and smallest.ai requests",
+  footage: "Actual app operation; illustrative environmental demo data; genuine GPT-5 nano and smallest.ai requests",
   visuals: "Original vector-style city and park illustrations, generated with Pillow",
   audio: "smallest.ai narration and an actual app voice excerpt; no background bed or music" }, null, 2));
 console.log(JSON.stringify({ video: join(out, "aqility-demo-1080p.mp4"), duration, captionWords: words.length, captionGroups: count }));
