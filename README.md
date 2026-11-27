@@ -49,6 +49,21 @@ Controls support keyboards, visible focus, native modal focus containment and Es
 
 For browser regression checks, run `npm install`, keep `npm start` running, then run `npm run test:browser`. The script uses installed Google Chrome by default (`BROWSER_CHANNEL=chromium` uses Playwright Chromium after installing it separately). Tests cover chart periods and table data, CSV, profile apply/cancel and focus restoration, city search, hourly selection, error recovery, five viewport sizes, and axe scans of desktop, mobile, dialogs and errors. Reports and screenshots are saved to a temporary directory printed by the script. Automated checks complement manual accessibility testing; they do not certify WCAG conformance.
 
+## Demo video
+
+The horizontal product film is exported locally to `exports/demo-video/aqility-demo-1080p.mp4` (1920×1080, H.264/AAC, 30 fps). The folder also contains an editable subtitle file, cover image, source footage, narration, and production notes; generated media is ignored by Git.
+
+To reproduce it, keep `npm start` running, install FFmpeg and Python Pillow, and run these commands from the repository root:
+
+```powershell
+npx playwright install ffmpeg
+node --env-file=.env scripts/capture-demo.mjs
+python scripts/render-demo.py
+node --env-file=.env scripts/caption-demo.mjs
+```
+
+Capture uses the actual app, genuine GPT-5 nano summaries, and smallest.ai playback with illustrative environmental demo data. Narration uses smallest.ai TTS; caption alignment requires Pulse speech-to-text access on the same key. API requests use provider credits. Existing media and timestamps are reused on reruns. To refresh a recording, move its generated `capture.json` aside first. Original vector-style illustrations and an original quiet synthesized audio bed accompany the footage.
+
 ## Features
 
 - City search and optional device location.
