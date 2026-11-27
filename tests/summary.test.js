@@ -62,6 +62,44 @@ test("AI request uses bounded instructions and sanitized environmental report", 
   assert.equal(response.source, "ai");
 });
 
+test("OpenAI key selects GPT-5 nano directly and disables response storage", async () => {
+  const response = await createSummary(input(), {
+    env: { OPENAI_API_KEY: "test-key", AI_GATEWAY_API_KEY: "test-gateway" },
+    generate: async options => {
+      assert.equal(options.model.modelId, "gpt-5-nano");
+      assert.equal(options.model.provider, "openai.responses");
+      assert.equal(options.providerOptions.openai.store, false);
+      assert.equal(options.providerOptions.openai.reasoningEffort, "minimal");
+      assert.equal(options.maxOutputTokens, 1000);
+      return { text: "General environmental summary." };
+    },
+  });
+  assert.equal(response.source, "ai");
+});
+
+test("real OpenAI SDK sends GPT-5 nano request and parses a provider response", async t => {
+  let called = false;
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    assert.equal(String(url), "https://api.openai.com/v1/responses");
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, "gpt-5-nano");
+    assert.equal(body.store, false);
+    assert.equal(body.reasoning.effort, "minimal");
+    assert.equal(body.max_output_tokens, 1000);
+    called = true;
+    return Response.json({ id: "resp_test", object: "response", created_at: 1795780800,
+      model: "gpt-5-nano", status: "completed", error: null, incomplete_details: null,
+      output: [{ id: "msg_test", type: "message", role: "assistant", status: "completed",
+        content: [{ type: "output_text", text: "Conditions favor indoor activity.", annotations: [] }] }],
+      usage: { input_tokens: 100, output_tokens: 10, total_tokens: 110,
+        input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } },
+    });
+  });
+  const result = await createSummary(input(), { env: { OPENAI_API_KEY: "test-only-not-a-real-key" } });
+  assert.equal(called, true);
+  assert.deepEqual(result, { source: "ai", summary: "Conditions favor indoor activity." });
+});
+
 test("summary HTTP boundary rejects bad method, foreign origins, malformed and oversized bodies", async () => {
   const server = http.createServer(handleSummary);
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
