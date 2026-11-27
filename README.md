@@ -1,5 +1,7 @@
 # Aqility
 
+Run all commands from the repository root. Application files live directly here: `dist/`, `tests/`, `package.json`, and `server.js`.
+
 An urban air-quality assistant for a hackathon. Run `npm start`, then open http://localhost:5173. Run `npm test` for the health-guidance, history, and planning checks. No runtime dependencies or API keys required.
 
 ## Interface and accessibility
