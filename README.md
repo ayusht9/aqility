@@ -1,8 +1,31 @@
 # Aqility
 
-Run all commands from the repository root. Application files live directly here: `dist/`, `tests/`, `package.json`, and `server.js`.
+Run all commands from the repository root. Application files live directly here: `dist/`, `scripts/`, `tests/`, `package.json`, and `server.js`.
 
-An urban air-quality assistant for a hackathon. Run `npm start`, then open http://localhost:5173. Run `npm test` for the health-guidance, history, and planning checks. No runtime dependencies or API keys required.
+An urban air-quality assistant for a hackathon. Run `npm start`, then open http://localhost:5173. Run `npm test` for health-guidance, history, planning, and authentication validation checks. The public environmental dashboard requires no API keys. Email authentication needs a configured Supabase project; its official browser SDK is bundled locally.
+
+## Email OTP authentication
+
+Login and registration use Supabase Auth email OTP. Login sets `shouldCreateUser: false`; registration sets it to `true`. Only the email and optional display name are sent to Supabase. Health fields never enter authentication requests. A numeric code is verified by the provider, never generated or checked in browser code. There are no production test codes or mocked authentication endpoints.
+
+`dist/auth-config.json` connects to the Aqility Supabase project (`oyupodxlyxapqhgidxyr`) in the Mumbai region, owned by `ayusht9`. It contains only the public URL and publishable key. The live Auth settings endpoint responds successfully with email authentication and registration enabled. No real inbox delivery has been verified yet.
+
+Dashboard setup remains required: set the site URL, apply the numeric-code template to both email templates, and configure custom SMTP using the steps below. The connected Supabase tools cannot edit those Auth settings. Manage the project at https://supabase.com/dashboard/project/oyupodxlyxapqhgidxyr. The hosted website must also be redeployed with this configuration before it uses this project.
+
+To activate:
+
+1. Use the existing Aqility project above. Email authentication and registration are enabled.
+2. Configure the site URL as `https://aqility-air-companion.afloatsesame32.chatgpt.site`.
+3. Edit both **Confirm signup** and **Magic Link** email templates to include `{{ .Token }}` as the numeric code, instead of a link-only template. A sample is in `docs/email-otp-template.html`. Review the configured code length and expiry; the form accepts 6–10 numeric digits. Use a short expiry suitable for login (for example, ten minutes).
+4. Configure custom SMTP with a verified sending domain for deliveries to public users. Supabase's built-in email sender is restricted to authorized team addresses and is not a production email service. Keep SMTP credentials in Supabase's settings, never in browser files or Git. Provider email and verification rate limits remain authoritative; the 60-second client resend delay only improves the interface.
+5. Set the public `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` environment values, then run `npm run configure:auth`. This writes the public browser configuration. Only `sb_publishable_…` keys are accepted; secret/service-role keys are deliberately rejected. Public project settings may be committed; SMTP passwords, service keys, and management credentials must not be.
+6. Run `npm install`, `npm run build`, and the checks below. Deploy the tested configuration, then verify real registration, inbox delivery, invalid/expired codes, repeat login, and sign-out using an email address you own.
+
+Session storage, renewal, and revocation are handled by the Supabase SDK. Sessions use `sessionStorage` and survive reloads within the tab; restoration checks the provider's current user endpoint. Signing out revokes the local session and clears the in-memory health profile. No private server resources or cross-device profile storage are added in this feature. Any future account-owned database/API must validate identity and ownership server-side, with row-level security; frontend account visibility is not an authorization boundary.
+
+`npm run test:auth` runs a real-browser integration suite with the real SDK and **mocked provider responses**. It never sends email. It checks unavailable setup, registration versus login, wrong/expired codes, cooldown, session restoration, account display, sign-out, rate-limit errors, and accessibility. Keep `npm start` running and use installed Chrome, as for the dashboard browser suite.
+
+Official setup references: [Passwordless email OTP](https://supabase.com/docs/guides/auth/auth-email-passwordless), [email templates](https://supabase.com/docs/guides/auth/auth-email-templates), [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp), and [API key types](https://supabase.com/docs/guides/getting-started/api-keys).
 
 ## Interface and accessibility
 

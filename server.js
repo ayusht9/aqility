@@ -7,6 +7,11 @@ const files = {
   "/data.js": ["data.js", "text/javascript"],
   "/chart.js": ["chart.js", "text/javascript"],
   "/style.css": ["style.css", "text/css"],
+  "/auth.js": ["auth.js", "text/javascript"],
+  "/auth.css": ["auth.css", "text/css"],
+  "/auth-validation.js": ["auth-validation.js", "text/javascript"],
+  "/auth-config.json": ["auth-config.json", "application/json"],
+  "/vendor/supabase.js": ["vendor/supabase.js", "text/javascript"],
 };
 http
   .createServer(async (req, res) => {

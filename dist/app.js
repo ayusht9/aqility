@@ -22,6 +22,7 @@ import {
   renderChart,
   downloadCSV,
 } from "./chart.js";
+import { initAuth } from "./auth.js";
 
 const $ = (selector) => document.querySelector(selector);
 const state = {
@@ -575,4 +576,10 @@ new ResizeObserver((entries) => {
     renderTrend();
   }
 }).observe($("#chart"));
+window.addEventListener("aqility:signedout", () => {
+  state.profile = { age: "adult" };
+  $("#profile-form").reset();
+  render();
+});
+initAuth();
 load();

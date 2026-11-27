@@ -10,6 +10,7 @@
     />
     <title>Aqility | Environmental dashboard</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth.css" />
     <script type="module" src="app.js"></script>
   </head>
   <body>
@@ -128,10 +129,36 @@
           ><span class="header-divider">/</span
           ><strong>Environmental overview</strong>
         </div>
-        <button class="profile-open button secondary">
-          <svg class="icon" aria-hidden="true"><use href="#i-heart" /></svg
-          ><span id="header-profile">General adult profile</span>
-        </button>
+        <div class="header-actions">
+          <button class="profile-open button secondary">
+            <svg class="icon" aria-hidden="true"><use href="#i-heart" /></svg
+            ><span id="header-profile">General adult profile</span>
+          </button>
+          <div id="signed-out-actions" class="account-actions">
+            <button
+              class="button quiet auth-open"
+              data-auth-mode="login"
+              aria-haspopup="dialog"
+            >
+              Log in
+            </button>
+            <button
+              class="button primary auth-open"
+              data-auth-mode="register"
+              aria-haspopup="dialog"
+            >
+              Register
+            </button>
+          </div>
+          <button
+            id="account-open"
+            class="button secondary"
+            aria-haspopup="dialog"
+            hidden
+          >
+            My account
+          </button>
+        </div>
       </header>
       <main id="main" tabindex="-1">
         <div class="page-heading">
@@ -585,6 +612,163 @@
         Your browser will ask for permission. Only coordinates are shared with
         Open-Meteo.
       </p>
+    </dialog>
+    <dialog
+      id="auth-dialog"
+      aria-labelledby="auth-title"
+      aria-describedby="auth-description"
+    >
+      <div class="dialog-heading">
+        <h2 id="auth-title">Welcome back</h2>
+        <button
+          type="button"
+          class="close icon-button"
+          aria-label="Close sign in"
+        >
+          <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <p id="auth-description">
+        Log in with a verification code sent to your email. No password needed.
+      </p>
+      <div
+        id="auth-mode-switch"
+        class="segmented auth-mode-switch"
+        role="group"
+        aria-label="Account action"
+      >
+        <button type="button" data-auth-tab="login" aria-pressed="true">
+          Log in</button
+        ><button type="button" data-auth-tab="register" aria-pressed="false">
+          Register
+        </button>
+      </div>
+      <p id="auth-unavailable" class="auth-notice" hidden>
+        Email sign-in is not available yet. You can continue using the public
+        dashboard.
+      </p>
+      <form id="auth-email-form">
+        <div id="auth-name-field" hidden>
+          <label for="auth-name"
+            >Your name <span class="optional">(optional)</span></label
+          ><input
+            id="auth-name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            maxlength="80"
+          />
+        </div>
+        <label for="auth-email">Email address</label
+        ><input
+          id="auth-email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          maxlength="254"
+          placeholder="you@example.com"
+          required
+          aria-describedby="auth-status"
+        />
+        <button id="auth-send" class="button primary auth-submit" type="submit">
+          Send login code
+        </button>
+      </form>
+      <form id="auth-code-form" hidden>
+        <div class="email-confirmation">
+          <span id="auth-destination"></span
+          ><button id="auth-change-email" class="button quiet" type="button">
+            Change email
+          </button>
+        </div>
+        <label for="auth-code">Verification code</label
+        ><input
+          id="auth-code"
+          name="code"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          pattern="[0-9]{6,10}"
+          minlength="6"
+          maxlength="10"
+          required
+          aria-describedby="auth-code-hint auth-status"
+        />
+        <p id="auth-code-hint" class="field-hint">
+          Enter the code from your email. You can paste the full code.
+        </p>
+        <button
+          id="auth-verify"
+          class="button primary auth-submit"
+          type="submit"
+        >
+          Verify & log in
+        </button>
+        <div class="resend-row">
+          <span>Didn't receive it? Check your spam folder.</span
+          ><button id="auth-resend" class="button quiet" type="button" disabled>
+            Resend code
+          </button>
+        </div>
+      </form>
+      <p
+        id="auth-status"
+        class="auth-status"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      ></p>
+      <p class="privacy">
+        <svg class="icon" aria-hidden="true"><use href="#i-shield" /></svg>Your
+        email is used to verify your account. Health information stays in this
+        tab and is never included in sign-in requests.
+      </p>
+      <button id="auth-guest" type="button" class="button quiet auth-guest">
+        Continue without signing in
+      </button>
+    </dialog>
+    <dialog
+      id="account-dialog"
+      aria-labelledby="account-title"
+      aria-describedby="account-description"
+    >
+      <div class="dialog-heading">
+        <h2 id="account-title">Your account</h2>
+        <button
+          type="button"
+          class="close icon-button"
+          aria-label="Close account"
+        >
+          <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <p id="account-description">
+        You're signed in to Aqility with a verified email address.
+      </p>
+      <dl class="account-details">
+        <div>
+          <dt>Email address</dt>
+          <dd id="account-email"></dd>
+        </div>
+      </dl>
+      <p class="privacy">
+        Your session stays in this browser tab. Health information is not saved
+        to your account.
+      </p>
+      <p
+        id="account-status"
+        class="auth-status"
+        role="status"
+        aria-live="polite"
+      ></p>
+      <button
+        id="auth-signout"
+        type="button"
+        class="button secondary auth-submit"
+      >
+        Sign out
+      </button>
     </dialog>
     <div
       id="announcement"
