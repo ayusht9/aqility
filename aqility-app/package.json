@@ -1,1 +1,14 @@
-{"name":"aqility","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.js","start":"node server.js"}}
+{
+  "name": "aqility",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "node server.js",
+    "test:browser": "node tests/browser.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
+    "playwright": "1.65.1"
+  }
+}

@@ -1,6 +1,14 @@
 # Aqility
 
-An urban air-quality assistant for a hackathon. Run `npm start`, then open http://localhost:5173. Run `npm test` for the health-guidance and planning checks. No dependencies or API keys required.
+An urban air-quality assistant for a hackathon. Run `npm start`, then open http://localhost:5173. Run `npm test` for the health-guidance, history, and planning checks. No runtime dependencies or API keys required.
+
+## Interface and accessibility
+
+The analytical dashboard includes current-condition metrics, 7-day daily and 24-hour hourly trend views, an exact-value table, labeled CSV downloads, interactive forecast hours, pollutant explanations, and a health profile. Charts resize their coordinate system to keep labels readable on small screens. Risks have text labels as well as color.
+
+Controls support keyboards, visible focus, native modal focus containment and Escape dismissal. Dialogs have accessible titles and descriptions. Loading, error, profile, and forecast changes are announced to assistive technology. Mobile forecast targets use two columns. Reduced-motion and forced-colors preferences are respected. The interface uses system fonts and no external font requests.
+
+For browser regression checks, run `npm install`, keep `npm start` running, then run `npm run test:browser`. The script uses installed Google Chrome by default (`BROWSER_CHANNEL=chromium` uses Playwright Chromium after installing it separately). Tests cover chart periods and table data, CSV, profile apply/cancel and focus restoration, city search, hourly selection, error recovery, five viewport sizes, and axe scans of desktop, mobile, dialogs and errors. Reports and screenshots are saved to a temporary directory printed by the script. Automated checks complement manual accessibility testing; they do not certify WCAG conformance.
 
 ## Features
 

@@ -1,26 +1,578 @@
-import {category, sensitive, concern, bestHour, average, guidance} from './engine.js';
-const $=s=>document.querySelector(s);
-let profile={age:'adult'}, activity='walk', city={name:'New Delhi',country:'India',latitude:28.6139,longitude:77.209,timezone:'Asia/Kolkata'}, data=null, controller=null, demo=false;
-const number=(v,suffix='')=>Number.isFinite(v)?`${Math.round(v)}${suffix}`:'Unavailable';
-const localTime=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:city.timezone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date()).replace(' ','T');
-const hourLabel=t=>new Date(t+'Z').toLocaleTimeString('en',{timeZone:'UTC',hour:'numeric',hour12:true});
-const dayLabel=t=>new Date(t+'T12:00:00Z').toLocaleDateString('en',{timeZone:'UTC',weekday:'short'});
-async function fetchJSON(url, signal){const r=await fetch(url,{signal});if(!r.ok)throw new Error(`Provider returned ${r.status}`);return r.json();}
-function demoData(){const now=localTime(),day=now.slice(0,10),start=new Date(day+'T00:00:00Z');let hours=[];for(let i=-168;i<49;i++){const d=new Date(+start+i*3600000);const h=d.getUTCHours();hours.push({time:d.toISOString().slice(0,16),aqi:Math.round(68+25*Math.sin((h+5)/24*Math.PI*2)+Math.sin(i/12)*9),temp:Math.round(24+5*Math.sin((h-8)/24*Math.PI*2)),rain:0,uv:h>7&&h<18?Math.max(0,6-Math.abs(13-h)):0,pm2_5:24,pm10:48,nitrogen_dioxide:19,ozone:56});}return{hours,current:hours.find(h=>h.time===now.slice(0,13)+':00')??hours[168],humidity:58,wind:8,feels:26,weather:1};}
-async function load(){controller?.abort();controller=new AbortController();const signal=controller.signal;$('#refresh').disabled=true;$('#source-status').textContent='Loading environmental data…';$('#city-name').textContent=`${city.name}${city.country?', '+city.country:''}`;$('#date').textContent=new Intl.DateTimeFormat('en',{timeZone:city.timezone,weekday:'long',month:'long',day:'numeric'}).format(new Date());
- try{if(demo){data=demoData();}else{const params=new URLSearchParams({latitude:city.latitude,longitude:city.longitude,timezone:city.timezone,past_days:7,forecast_days:3});const timeout=setTimeout(()=>controller.abort(),18000);let air,weather;try{[air,weather]=await Promise.all([fetchJSON(`https://air-quality-api.open-meteo.com/v1/air-quality?${params}&hourly=us_aqi,pm2_5,pm10,nitrogen_dioxide,ozone`,signal),fetchJSON(`https://api.open-meteo.com/v1/forecast?${params}&hourly=temperature_2m,precipitation_probability,uv_index&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`,signal)]);}finally{clearTimeout(timeout);}if(!air.hourly?.time?.length||!weather.hourly?.time?.length)throw new Error('Incomplete provider data');const weatherMap=new Map(weather.hourly.time.map((t,i)=>[t,{temp:weather.hourly.temperature_2m[i],rain:weather.hourly.precipitation_probability[i],uv:weather.hourly.uv_index[i]}]));const hours=air.hourly.time.map((time,i)=>({time,aqi:air.hourly.us_aqi[i],pm2_5:air.hourly.pm2_5[i],pm10:air.hourly.pm10[i],nitrogen_dioxide:air.hourly.nitrogen_dioxide[i],ozone:air.hourly.ozone[i],...weatherMap.get(time)}));const current=hours.find(h=>h.time===localTime().slice(0,13)+':00');if(!current||!Number.isFinite(current.aqi))throw new Error('Current AQI unavailable');data={hours,current,humidity:weather.current?.relative_humidity_2m,wind:weather.current?.wind_speed_10m,feels:weather.current?.apparent_temperature,weather:weather.current?.weather_code};}render();$('#source-status').textContent=demo?'● Demo data · illustrative conditions, not current readings':`● Updated ${hourLabel(data.current.time)} · modeled data · ${city.timezone}`;}
- catch(error){if(signal.aborted&&controller.signal!==signal)return;data=null;clearData();$('#source-status').textContent='Data unavailable. Retry or explore the labeled demo.';}
- finally{if(controller.signal===signal)$('#refresh').disabled=false;}}
-function clearData(){for(const id of ['aqi','temperature','humidity','wind','uv'])$('#'+id).textContent='—';$('#aqi-label').textContent='Unavailable';$('#air-summary').textContent='Current environmental data could not be retrieved.';$('#comparison').textContent='Historical comparison unavailable.';$('#feels-like').textContent='Feels like —';$('#weather-description').textContent='Unavailable';$('#hours').replaceChildren();$('#chart').replaceChildren();$('#pollutants').replaceChildren();$('#advice').replaceChildren();$('#best-window').textContent='Outdoor guidance requires current forecast data.';$('#history-average').textContent='Average —';$('#insight-title').textContent='Waiting for a clearer picture';$('#insight-copy').textContent='Refresh the data or explore demo mode.';}
-function render(){if(!data)return;const c=data.current,aqi=c.aqi;$('#aqi').textContent=number(aqi);$('#aqi-label').textContent=category(aqi);$('#air-summary').textContent=guidance(c,profile,activity)[0][1];$('#temperature').textContent=number(c.temp,'°');$('#humidity').textContent=number(data.humidity,'%');$('#wind').textContent=number(data.wind,' km/h');$('#uv').textContent=number(c.uv);$('#feels-like').textContent=`Feels like ${number(data.feels,'°C')}`;$('#weather-description').textContent=data.weather===0?'Clear sky':data.weather<=3?'Partly cloudy':data.weather>=51?'Precipitation possible':'Cloudy or hazy';
- const today=localTime().slice(0,10), historical=data.hours.filter(h=>h.time.slice(0,10)<today),avg=average(historical.map(h=>h.aqi));$('#comparison').textContent=avg===null?'Historical comparison unavailable.':`${Math.abs(Math.round(aqi-avg))} AQI points ${aqi>avg?'above':'below'} the previous 7-day average`;$('#history-average').textContent=`Average ${number(avg)}`;
- const upcoming=data.hours.filter(h=>h.time>=localTime().slice(0,13)+':00').slice(0,24),best=bestHour(upcoming,profile,activity);$('#best-window').textContent=best?`Recommended window: ${best.time.slice(0,10)===today?'Today':'Tomorrow'}, ${hourLabel(best.time)} · AQI ${number(best.aqi)} · ${number(best.temp,'°C')} · lower concern, not risk-free.`:'No lower-concern daytime window in the next 24 hours. Consider indoor plans and recheck later.';
- const hours=$('#hours');hours.replaceChildren();for(const h of upcoming.filter((_,i)=>i%3===0).slice(0,8)){const level=concern(h,profile,activity),el=document.createElement('div');el.className='hour'+(h===best?' recommended':'');const time=document.createElement('time');time.dateTime=h.time;time.textContent=hourLabel(h.time);const n=document.createElement('strong');n.textContent=number(h.aqi);const small=document.createElement('small');small.textContent=['Lower concern','Precautions','Prefer indoors'][level];const dot=document.createElement('i');dot.className='dot '+['good','caution','poor'][level];el.append(time,n,small,dot);hours.append(el);}
- $('#insight-title').textContent=concern(c,profile,activity)===2?'Today calls for a little extra care.':concern(c,profile,activity)===1?'A few precautions. A better day.':'There’s room to breathe today.';$('#insight-copy').textContent=best?`Your forecast suggests ${hourLabel(best.time)} ${best.time.slice(0,10)===today?'today':'tomorrow'} as a better moment for your plans. See your outdoor planner below.`:'An indoor alternative is a good choice while conditions improve.';
- $('#profile-summary').textContent=sensitive(profile)?'Extra precautions for your sensitive profile.':'Guidance for a general adult profile.';const advice=$('#advice');advice.replaceChildren();guidance(c,profile,activity).forEach(([title,copy],i)=>{const row=document.createElement('div');row.className='advice-row';const icon=document.createElement('span');icon.className='advice-icon';icon.setAttribute('aria-hidden','true');icon.textContent=['⌁','☀','♡'][i];const content=document.createElement('div'),heading=document.createElement('h3'),p=document.createElement('p');heading.textContent=title;p.textContent=copy;content.append(heading,p);row.append(icon,content);advice.append(row);});
- const pollutants=$('#pollutants');pollutants.replaceChildren();for(const [key,label] of [['pm2_5','PM₂.₅'],['pm10','PM₁₀'],['nitrogen_dioxide','NO₂'],['ozone','O₃']]){const div=document.createElement('div'),span=document.createElement('span'),strong=document.createElement('strong');span.textContent=label;strong.textContent=number(c[key]);div.append(span,strong);pollutants.append(div);}renderChart(historical);}
-function renderChart(hours){const grouped=new Map();for(const h of hours){const key=h.time.slice(0,10);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(h.aqi);}const days=[...grouped].slice(-7).map(([day,v])=>({day,value:average(v)}));const valid=days.filter(d=>d.value!==null);if(!valid.length){$('#chart').textContent='Historical data unavailable.';return;}const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 520 165');svg.setAttribute('role','img');svg.setAttribute('aria-label',days.map(d=>`${d.day}: ${number(d.value)} AQI`).join('; '));const max=Math.max(100,...valid.map(d=>d.value))*1.15;function add(tag,attrs,text){const el=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attrs))el.setAttribute(k,v);if(text)el.textContent=text;svg.append(el);return el;}for(let i=0;i<4;i++){let y=15+i*37;add('line',{x1:32,y1:y,x2:510,y2:y,stroke:'#e8eeea','stroke-dasharray':'3 4'});add('text',{x:0,y:y+4},String(Math.round(max*(1-i/3))));}const pts=days.map((d,i)=>({x:40+i*76,y:d.value===null?null:126-d.value/max*111}));if(valid.length===days.length){const path='M'+pts.map(p=>`${p.x},${p.y}`).join(' L');add('path',{d:path+` L${pts.at(-1).x},126 L40,126 Z`,fill:'#e8f3ec'});add('path',{d:path,stroke:'#4e907b','stroke-width':2.5,fill:'none','stroke-linejoin':'round'});}days.forEach((d,i)=>{if(pts[i].y!==null)add('circle',{cx:pts[i].x,cy:pts[i].y,r:3,fill:'#43836e'});add('text',{x:pts[i].x,y:152,'text-anchor':'middle'},dayLabel(d.day));});$('#chart').replaceChildren(svg);}
-document.querySelectorAll('.profile-open').forEach(b=>b.addEventListener('click',()=>$('#profile-dialog').showModal()));document.querySelectorAll('.close').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));$('#profile-form').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.currentTarget);profile={age:f.get('age'),asthma:f.has('asthma'),heart:f.has('heart'),sensitive:f.has('sensitive')};$('#profile-dialog').close();render();});$('#activity').addEventListener('change',e=>{activity=e.target.value;render();});$('#refresh').addEventListener('click',load);$('#demo-toggle').addEventListener('click',()=>{demo=!demo;$('#demo-toggle').textContent=demo?'Switch to live data':'Explore demo';load();});$('#city-open').addEventListener('click',()=>$('#city-dialog').showModal());
-let searchController;$('#city-form').addEventListener('submit',async e=>{e.preventDefault();searchController?.abort();searchController=new AbortController();const signal=searchController.signal;$('#city-results').replaceChildren();$('#search-status').textContent='Searching…';try{const result=await fetchJSON('https://geocoding-api.open-meteo.com/v1/search?'+new URLSearchParams({name:$('#city-query').value.trim(),count:6,language:'en',format:'json'}),signal);$('#search-status').textContent=result.results?.length?'Select a location:':'No cities found. Try a nearby city.';for(const location of result.results??[]){const b=document.createElement('button');b.textContent=[location.name,location.admin1,location.country].filter(Boolean).join(', ');b.addEventListener('click',()=>{city=location;$('#city-dialog').close();load();});$('#city-results').append(b);}}catch(err){if(!signal.aborted)$('#search-status').textContent='City search unavailable. Please try again.';}});
-$('#geolocate').addEventListener('click',()=>{if(!navigator.geolocation){$('#search-status').textContent='Location access is unavailable. Search by city instead.';return;}$('#search-status').textContent='Waiting for location permission…';navigator.geolocation.getCurrentPosition(p=>{city={name:'Your location',country:'',latitude:p.coords.latitude,longitude:p.coords.longitude,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone};$('#city-dialog').close();load();},()=>{$('#search-status').textContent='Location could not be accessed. Search by city instead.';},{timeout:12000,maximumAge:300000});});
+import {
+  category,
+  sensitive,
+  concern,
+  bestHour,
+  average,
+  guidance,
+} from "./engine.js";
+import {
+  DEFAULT_CITY,
+  cityTime,
+  loadEnvironment,
+  demoEnvironment,
+  fetchJSON,
+  historySeries,
+  weatherDescription,
+} from "./data.js";
+import {
+  formatNumber as number,
+  hourLabel,
+  dateLabel,
+  renderChart,
+  downloadCSV,
+} from "./chart.js";
+
+const $ = (selector) => document.querySelector(selector);
+const state = {
+  profile: { age: "adult" },
+  activity: "walk",
+  city: { ...DEFAULT_CITY },
+  data: null,
+  demo: false,
+  period: "7d",
+  selectedHour: null,
+  controller: null,
+};
+const activityNames = { walk: "walking", run: "running", commute: "commuting" };
+const riskNames = ["Lower concern", "Precautions", "Prefer indoors"];
+const riskClasses = ["good", "caution", "poor"];
+
+function element(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+function icon(name) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "icon");
+  svg.setAttribute("aria-hidden", "true");
+  const use = document.createElementNS(svg.namespaceURI, "use");
+  use.setAttribute("href", "#i-" + name);
+  svg.append(use);
+  return svg;
+}
+function aqiClass(aqi) {
+  if (!Number.isFinite(aqi)) return "neutral";
+  return aqi <= 50
+    ? "good"
+    : aqi <= 100
+      ? "caution"
+      : aqi <= 150
+        ? "sensitive-risk"
+        : aqi <= 200
+          ? "poor"
+          : aqi <= 300
+            ? "very-poor"
+            : "hazardous";
+}
+function announce(message) {
+  $("#announcement").textContent = message;
+}
+
+async function load() {
+  state.controller?.abort();
+  const controller = new AbortController();
+  state.controller = controller;
+  const city = { ...state.city },
+    demo = state.demo;
+  $("#refresh").disabled = true;
+  $("#export-data").disabled = true;
+  $("#error-banner").hidden = true;
+  $("#dashboard-content").setAttribute("aria-busy", "true");
+  $("#dashboard-content").classList.add("loading");
+  $("#mode-badge").className = "mode-badge";
+  $("#mode-badge").textContent = "Updating";
+  $("#source-status").textContent = `Loading ${city.name} environmental data…`;
+  $("#city-name").textContent = [city.name, city.country]
+    .filter(Boolean)
+    .join(", ");
+  $("#date").textContent = new Intl.DateTimeFormat("en", {
+    timeZone: city.timezone,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date());
+  // Clear the previous city's values immediately; they must not appear as the new city's data.
+  state.data = null;
+  state.selectedHour = null;
+  clearData(true);
+  const timeout = setTimeout(() => controller.abort(), 18000);
+  try {
+    const result = demo
+      ? demoEnvironment(city)
+      : await loadEnvironment(city, controller.signal);
+    if (state.controller !== controller) return;
+    state.data = result;
+    render();
+    $("#mode-badge").textContent = demo ? "Demo data" : "Modeled data";
+    $("#mode-badge").classList.toggle("demo", demo);
+    $("#source-status").textContent = demo
+      ? `Illustrative only · ${city.timezone}`
+      : `Current hour ${hourLabel(result.current.time)} · ${city.timezone}`;
+    $("#export-data").disabled = false;
+  } catch (error) {
+    if (state.controller !== controller) return;
+    state.data = null;
+    clearData(false);
+    $("#error-banner").hidden = false;
+    $("#mode-badge").textContent = "Unavailable";
+    $("#mode-badge").className = "mode-badge error";
+    $("#source-status").textContent = "Refresh to retry, or explore demo data.";
+  } finally {
+    clearTimeout(timeout);
+    if (state.controller === controller) {
+      $("#refresh").disabled = false;
+      $("#dashboard-content").setAttribute("aria-busy", "false");
+      $("#dashboard-content").classList.remove("loading");
+    }
+  }
+}
+
+function clearData(loading) {
+  for (const id of [
+    "aqi",
+    "temperature",
+    "pm-value",
+    "baseline-value",
+    "humidity",
+    "wind",
+    "uv",
+    "rain",
+  ])
+    $("#" + id).textContent = "—";
+  $("#aqi-label").textContent = loading ? "Loading" : "Unavailable";
+  $("#aqi-label").className = "risk-badge neutral";
+  $("#comparison").textContent = loading
+    ? "Comparing historical data…"
+    : "Historical comparison unavailable";
+  $("#weather-description").textContent = loading
+    ? "Loading weather…"
+    : "Weather unavailable";
+  $("#feels-like").textContent = "Feels like —";
+  $("#insight-title").textContent = loading
+    ? "Assessing conditions"
+    : "Conditions unavailable";
+  $("#air-summary").textContent = loading
+    ? "Checking air quality and weather for your profile."
+    : "Current environmental data is required for guidance.";
+  $("#chart").textContent = loading
+    ? "Loading trend data…"
+    : "Trend data unavailable.";
+  $("#history-average").textContent = "Average —";
+  for (const id of ["hours", "advice", "pollutants", "history-rows"])
+    $("#" + id).replaceChildren();
+  $("#best-title").textContent = loading
+    ? "Finding a suitable time"
+    : "No forecast available";
+  $("#best-window").textContent = loading
+    ? "Comparing daytime air quality, temperature, UV, and rain."
+    : "Refresh data to retrieve outdoor planning guidance.";
+  $("#hour-detail").textContent = loading
+    ? "Loading hourly forecast…"
+    : "Hourly details unavailable.";
+}
+
+function render() {
+  if (!state.data) return;
+  const { current: c, hours } = state.data,
+    { profile, activity, city } = state,
+    now = cityTime(city);
+  $("#aqi").textContent = number(c.aqi);
+  $("#aqi-label").textContent = category(c.aqi);
+  $("#aqi-label").className = "risk-badge " + aqiClass(c.aqi);
+  $("#temperature").textContent = number(c.temp);
+  $("#pm-value").textContent = number(c.pm2_5);
+  $("#weather-description").textContent = weatherDescription(
+    state.data.weather,
+  );
+  $("#feels-like").textContent = `Feels like ${number(state.data.feels, "°C")}`;
+  $("#humidity").textContent = number(state.data.humidity, "%");
+  $("#wind").textContent = number(state.data.wind, " km/h");
+  $("#uv").textContent = number(c.uv);
+  $("#rain").textContent = number(c.rain, "%");
+  const historical = hours.filter(
+      (h) => h.time.slice(0, 10) < now.slice(0, 10),
+    ),
+    baseline = average(historical.map((h) => h.aqi));
+  $("#baseline-value").textContent = number(baseline);
+  const delta = baseline === null ? null : Math.round(c.aqi - baseline);
+  $("#comparison").textContent =
+    delta === null
+      ? "Historical data unavailable"
+      : delta === 0
+        ? "Current AQI matches baseline"
+        : `${Math.abs(delta)} points ${delta > 0 ? "above" : "below"} baseline`;
+  const advice = guidance(c, profile, activity);
+  $("#insight-title").textContent = advice[0][0];
+  $("#air-summary").textContent = advice[0][1];
+  renderTrend();
+  renderForecast();
+  renderAdvice(advice);
+  renderPollutants(c);
+  const profileName = sensitive(profile)
+    ? "Sensitive profile"
+    : profile.age === "adult"
+      ? "General adult profile"
+      : "Personal profile";
+  $("#header-profile").textContent = profileName;
+  $("#profile-summary").textContent =
+    `${profileName} · ${activityNames[activity]}${sensitive(profile) ? " · extra precautions applied" : ""}`;
+}
+
+function renderTrend() {
+  if (!state.data) return;
+  $("#chart-subtitle").textContent =
+    state.period === "7d"
+      ? "Daily averages across the previous 7 days"
+      : "Hourly AQI across the previous 24 complete hours";
+  renderChart(
+    historySeries(state.data.hours, state.period, cityTime(state.city)),
+    state.period,
+    state.demo,
+  );
+}
+
+function renderForecast() {
+  const now = cityTime(state.city),
+    hours = state.data.hours
+      .filter((h) => h.time >= now.slice(0, 13) + ":00")
+      .slice(0, 24),
+    best = bestHour(hours, state.profile, state.activity);
+  $("#best-title").textContent = best
+    ? `Recommended: ${dateLabel(best.time)}, ${hourLabel(best.time)}`
+    : "No lower-concern daytime window";
+  $("#best-window").textContent = best
+    ? `AQI ${number(best.aqi)} · ${number(best.temp, "°C")} · lower concern for ${activityNames[state.activity]}. Check local advisories before leaving.`
+    : "Consider an indoor alternative and check again later. No daytime hour meets the planning criteria in the next 24 hours.";
+  // Eight representative hours, always including the recommended hour if one exists.
+  let visible = hours.filter((_, i) => i % 3 === 0).slice(0, 8);
+  if (best && !visible.includes(best)) {
+    visible[visible.length - 1] = best;
+    visible.sort((a, b) => a.time.localeCompare(b.time));
+  }
+  const selected =
+    visible.find((h) => h.time === state.selectedHour) ?? best ?? visible[0];
+  state.selectedHour = selected?.time ?? null;
+  const container = $("#hours");
+  container.replaceChildren();
+  for (const h of visible) {
+    const risk = concern(h, state.profile, state.activity),
+      button = element("button", "hour");
+    button.type = "button";
+    button.dataset.time = h.time;
+    button.setAttribute("aria-pressed", String(h === selected));
+    const time = element("time", "", hourLabel(h.time));
+    time.dateTime = h.time;
+    const day = element(
+      "span",
+      "forecast-day",
+      dateLabel(h.time) + (h === best ? " · Best time" : ""),
+    );
+    const value = element("span", "hour-value");
+    value.append(
+      element("strong", "", number(h.aqi)),
+      element("span", "", "AQI"),
+    );
+    button.append(
+      time,
+      day,
+      value,
+      element("span", "risk-badge " + riskClasses[risk], riskNames[risk]),
+      element("span", "hour-weather", number(h.temp, "°C")),
+    );
+    button.setAttribute(
+      "aria-label",
+      `${dateLabel(h.time)}, ${hourLabel(h.time)}. AQI ${number(h.aqi)}, ${number(h.temp, " degrees Celsius")}. ${riskNames[risk]}${h === best ? ". Recommended hour" : ""}`,
+    );
+    button.addEventListener("click", () => {
+      state.selectedHour = h.time;
+      container
+        .querySelectorAll("button")
+        .forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      renderHourDetail(h);
+    });
+    container.append(button);
+  }
+  if (selected) renderHourDetail(selected);
+  else $("#hour-detail").textContent = "No forecast hours are available.";
+}
+
+function renderHourDetail(hour) {
+  const detail = $("#hour-detail"),
+    title = element(
+      "strong",
+      "",
+      `${dateLabel(hour.time)}, ${hourLabel(hour.time)}: `,
+    );
+  const sentence = `${number(hour.temp, "°C")} · UV ${number(hour.uv)} · rain ${number(hour.rain, "%")}. ${guidance(hour, state.profile, state.activity)[0][1]}`;
+  detail.replaceChildren(title, document.createTextNode(sentence));
+}
+
+function renderAdvice(items) {
+  const container = $("#advice");
+  container.replaceChildren();
+  items.forEach(([title, copy], i) => {
+    const row = element("article", "advice-row"),
+      symbol = element("span", "advice-icon"),
+      content = element("div");
+    symbol.append(icon(["air", "sun", "shield"][i]));
+    content.append(element("h3", "", title), element("p", "", copy));
+    row.append(symbol, content);
+    container.append(row);
+  });
+}
+
+function renderPollutants(current) {
+  const container = $("#pollutants");
+  container.replaceChildren();
+  const specs = [
+    [
+      "pm2_5",
+      "PM₂.₅",
+      "Fine particulate matter",
+      "Fine particles can reach deep into the lungs.",
+    ],
+    [
+      "pm10",
+      "PM₁₀",
+      "Coarse particulate matter",
+      "Larger airborne particles include dust and smoke.",
+    ],
+    [
+      "nitrogen_dioxide",
+      "NO₂",
+      "Nitrogen dioxide",
+      "Often associated with fuel combustion and traffic.",
+    ],
+    [
+      "ozone",
+      "O₃",
+      "Ground-level ozone",
+      "Can irritate airways during outdoor exertion.",
+    ],
+  ];
+  for (const [key, label, name, description] of specs) {
+    const card = element("div", "pollutant"),
+      heading = element("div", "pollutant-heading");
+    heading.append(element("strong", "", label));
+    card.append(
+      heading,
+      element("div", "pollutant-name", name),
+      element("span", "pollutant-value", number(current[key])),
+      element("p", "", description),
+    );
+    container.append(card);
+  }
+}
+
+function syncProfileForm() {
+  const form = $("#profile-form");
+  form.elements.age.value = state.profile.age;
+  for (const name of ["asthma", "heart", "sensitive"])
+    form.elements[name].checked = !!state.profile[name];
+}
+document.querySelectorAll(".profile-open").forEach((button) =>
+  button.addEventListener("click", () => {
+    syncProfileForm();
+    $("#profile-dialog").showModal();
+  }),
+);
+document
+  .querySelectorAll(".close")
+  .forEach((button) =>
+    button.addEventListener("click", () => button.closest("dialog").close()),
+  );
+$("#profile-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const values = new FormData(event.currentTarget);
+  state.profile = {
+    age: values.get("age"),
+    asthma: values.has("asthma"),
+    heart: values.has("heart"),
+    sensitive: values.has("sensitive"),
+  };
+  $("#profile-dialog").close();
+  render();
+  announce(
+    "Health profile applied. Outdoor recommendations and precautions updated.",
+  );
+});
+$("#reset-profile").addEventListener("click", () => {
+  $("#profile-form").reset();
+  $("#profile-age").focus();
+});
+$("#activity").addEventListener("change", (event) => {
+  state.activity = event.target.value;
+  render();
+  announce(
+    `Outdoor recommendations updated for ${activityNames[state.activity]}.`,
+  );
+});
+$("#refresh").addEventListener("click", load);
+$("#demo-toggle").addEventListener("click", () => {
+  state.demo = !state.demo;
+  $("#demo-toggle").setAttribute("aria-pressed", String(state.demo));
+  $("#demo-toggle").textContent = state.demo
+    ? "Return to live data"
+    : "Explore demo";
+  load();
+});
+document.querySelectorAll("[data-period]").forEach((button) =>
+  button.addEventListener("click", () => {
+    state.period = button.dataset.period;
+    document
+      .querySelectorAll("[data-period]")
+      .forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+    renderTrend();
+    announce(
+      `Trend view changed to ${state.period === "7d" ? "7 days" : "24 hours"}.`,
+    );
+  }),
+);
+$("#table-toggle").addEventListener("click", () => {
+  const expanded = $("#table-toggle").getAttribute("aria-expanded") !== "true";
+  $("#table-toggle").setAttribute("aria-expanded", String(expanded));
+  $("#table-toggle").textContent = expanded
+    ? "Hide data table"
+    : "Show data table";
+  $("#history-table-wrap").hidden = !expanded;
+});
+$("#export-data").addEventListener("click", () => {
+  if (state.data)
+    downloadCSV(
+      historySeries(state.data.hours, state.period, cityTime(state.city)),
+      state.period,
+      state.city,
+      state.demo,
+    );
+});
+
+let searchController = null;
+$("#city-open").addEventListener("click", () => {
+  $("#city-dialog").showModal();
+  $("#city-query").focus();
+});
+$("#city-dialog").addEventListener("close", () => searchController?.abort());
+$("#city-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const query = $("#city-query").value.trim();
+  if (query.length < 2) {
+    $("#search-status").textContent = "Enter at least two characters.";
+    $("#city-query").focus();
+    return;
+  }
+  searchController?.abort();
+  const controller = new AbortController();
+  searchController = controller;
+  $("#city-results").replaceChildren();
+  $("#search-status").textContent = "Searching cities…";
+  $("#search-submit").disabled = true;
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    const results = await fetchJSON(
+      "https://geocoding-api.open-meteo.com/v1/search?" +
+        new URLSearchParams({
+          name: query,
+          count: 6,
+          language: "en",
+          format: "json",
+        }),
+      controller.signal,
+    );
+    if (searchController !== controller) return;
+    $("#search-status").textContent = results.results?.length
+      ? `${results.results.length} locations found. Select one below.`
+      : "No matching cities. Try another city name.";
+    for (const location of results.results ?? []) {
+      const button = element(
+        "button",
+        "",
+        [location.name, location.admin1, location.country]
+          .filter(Boolean)
+          .join(", "),
+      );
+      button.type = "button";
+      button.addEventListener("click", () => {
+        state.city = { ...location, timezone: location.timezone || "UTC" };
+        $("#city-dialog").close();
+        load();
+      });
+      $("#city-results").append(button);
+    }
+  } catch {
+    if (searchController === controller && $("#city-dialog").open)
+      $("#search-status").textContent =
+        "City search unavailable. Please try again.";
+  } finally {
+    clearTimeout(timeout);
+    if (searchController === controller) $("#search-submit").disabled = false;
+  }
+});
+$("#geolocate").addEventListener("click", () => {
+  if (!navigator.geolocation) {
+    $("#search-status").textContent =
+      "Location access is unavailable. Search by city instead.";
+    return;
+  }
+  $("#search-status").textContent = "Waiting for location permission…";
+  $("#geolocate").disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      state.city = {
+        name: "Your location",
+        country: "",
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      };
+      $("#geolocate").disabled = false;
+      $("#city-dialog").close();
+      load();
+    },
+    () => {
+      $("#geolocate").disabled = false;
+      $("#search-status").textContent =
+        "Location could not be accessed. Search by city instead.";
+    },
+    { timeout: 12000, maximumAge: 300000 },
+  );
+});
+
+// Mark the section currently being read without moving focus or forcing scroll.
+const navLinks = [...document.querySelectorAll(".sidebar nav a")];
+function updateNavigation() {
+  const targets = navLinks.map((link) => document.querySelector(link.hash));
+  let active = targets[0];
+  for (const target of targets)
+    if (target.getBoundingClientRect().top <= 180) active = target;
+  navLinks.forEach((link) => {
+    if (link.hash === "#" + active.id)
+      link.setAttribute("aria-current", "location");
+    else link.removeAttribute("aria-current");
+  });
+}
+let scrolling = false;
+addEventListener(
+  "scroll",
+  () => {
+    if (scrolling) return;
+    scrolling = true;
+    requestAnimationFrame(() => {
+      updateNavigation();
+      scrolling = false;
+    });
+  },
+  { passive: true },
+);
+let previousChartWidth = 0;
+new ResizeObserver((entries) => {
+  const width = Math.round(entries[0].contentRect.width);
+  if (width !== previousChartWidth) {
+    previousChartWidth = width;
+    renderTrend();
+  }
+}).observe($("#chart"));
 load();
