@@ -1,82 +1,163 @@
+<div align="center">
+
+<img src="docs/images/logo.svg" alt="Aqility logo" width="88" height="88">
+
 # Aqility
 
-Run all commands from the repository root. Application files live directly here: `dist/`, `scripts/`, `tests/`, `package.json`, and `server.js`.
+**Know your air. Plan your day.**<br>
+Air-quality insights, outdoor planning, AI summaries, and spoken briefings in one dashboard.
 
-An urban air-quality assistant for a hackathon. Run `npm start`, then open http://localhost:5173. Run `npm test` for health-guidance, history, planning, and authentication validation checks. The public environmental dashboard requires no API keys. Email authentication needs a configured Supabase project; its official browser SDK is bundled locally.
+[![License: MIT](https://img.shields.io/badge/license-MIT-103d43)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%E2%89%A522.12-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Stars](https://img.shields.io/github/stars/ayusht9/aqility?style=flat&color=35bca6)](https://github.com/ayusht9/aqility/stargazers)
+[![Forks](https://img.shields.io/github/forks/ayusht9/aqility?style=flat&color=35bca6)](https://github.com/ayusht9/aqility/forks)
+[![Open issues](https://img.shields.io/github/issues/ayusht9/aqility?color=35bca6)](https://github.com/ayusht9/aqility/issues)
+[![Last commit on dev](https://img.shields.io/github/last-commit/ayusht9/aqility/dev?label=last%20commit%20%28dev%29&color=103d43)](https://github.com/ayusht9/aqility/commits/dev/)
+[![Repository size](https://img.shields.io/github/repo-size/ayusht9/aqility?color=103d43)](https://github.com/ayusht9/aqility)
 
-## Summary and spoken playback
+[**ChatGPT-hosted preview**](https://aqility-air-companion.afloatsesame32.chatgpt.site) ·
+[Watch the demo](https://raw.githubusercontent.com/ayusht9/aqility/dev/docs/media/aqility-demo.mp4) ·
+[Quick start](#quick-start) ·
+[Screenshots](#screenshots) ·
+[Development guide](docs/DEVELOPMENT.md)
 
-Choose **AI summary** in the quick briefing panel, then **Listen** to read it aloud or **Stop reading** to stop. Playback is opt-in and stops when dashboard inputs change or the tab is hidden. Set `SMALLEST_API_KEY` in `.env` to use smallest.ai speech. The server calls Lightning v3.1 Pro with the `meher` voice (`SMALLEST_VOICE_ID` overrides the voice). Only the displayed summary is sent for speech generation. Audio stays in memory; replaying the same summary reuses the audio. New summaries clear the audio cache. These requests use your provider credits.
+<img src="docs/images/dashboard.png" alt="Aqility desktop dashboard with labeled demo readings, weather, trends, and summary controls" width="1000">
 
-Without that key, or if speech generation fails, playback uses browser speech where supported. Some browser speech services process text remotely. Browsers without either voice option retain the written summary. The smallest.ai key remains server-only; no live provider audio has been verified without a key. Run `npm run test:voice` for cloud playback checks using simulated provider responses and audio playback. The Node server serves `/api/voice`; static-only hosting uses browser speech.
+</div>
 
-The summary covers environmental readings and the selected activity for a general adult. Health profile and account fields are excluded from requests; personalized precautions remain in the dashboard. Loading or changing data clears the old briefing. Demo data and missing readings remain explicitly labeled.
+Aqility brings modeled US AQI and weather together with a 24-hour outdoor planner, optional personal precautions, and an AI-generated briefing you can read or listen to.
 
-Without AI credentials, the button produces a **Local summary** from the existing rules. For direct OpenAI summaries, set `OPENAI_API_KEY` in the repository-root `.env` file and run `npm start`; the server loads this optional file automatically. `OPENAI_SUMMARY_MODEL` defaults to `gpt-5-nano`. Requests use the Responses API with response storage disabled and minimal reasoning. Embedding models are not needed for summaries or browser speech. An OpenAI key takes priority over gateway credentials.
-
-As an alternative, set the server-only `AI_GATEWAY_API_KEY` (`AI_SUMMARY_MODEL` defaults to `google/gemini-3.8-flash`). `.env.example` lists both options. Never put either key in `dist/` or public browser configuration; `.env` is ignored by Git. The server uses the AI SDK, limits request size/concurrency/frequency, and falls back to the local summary on provider failure. Live AI generation still requires a valid key and has not yet been verified against an account.
-
-`/api/summary` requires the Node server (or a production backend implementing the same endpoint). Static-only hosting keeps local summaries and browser speech through the client fallback. This change does not publish the hosted site. Run `npm run test:summary` with the app server running for browser checks. These exercise the real local API; generated responses and speech playback are mocked for deterministic checks. Audible playback needs a device check.
-
-## Email OTP authentication
-
-Login and registration use Supabase Auth email OTP. Login sets `shouldCreateUser: false`; registration sets it to `true`. Only the email and optional display name are sent to Supabase. Health fields never enter authentication requests. A numeric code is verified by the provider, never generated or checked in browser code. There are no production test codes or mocked authentication endpoints.
-
-`dist/auth-config.json` connects to the Aqility Supabase project (`oyupodxlyxapqhgidxyr`) in the Mumbai region, owned by `ayusht9`. It contains only the public URL and publishable key. The live Auth settings endpoint responds successfully with email authentication and registration enabled. No real inbox delivery has been verified yet.
-
-Dashboard setup remains required: set the site URL, apply the numeric-code template to both email templates, and configure custom SMTP using the steps below. The connected Supabase tools cannot edit those Auth settings. Manage the project at https://supabase.com/dashboard/project/oyupodxlyxapqhgidxyr. The hosted website must also be redeployed with this configuration before it uses this project.
-
-To activate:
-
-1. Use the existing Aqility project above. Email authentication and registration are enabled.
-2. Configure the site URL as `https://aqility-air-companion.afloatsesame32.chatgpt.site`.
-3. Edit both **Confirm signup** and **Magic Link** email templates to include `{{ .Token }}` as the numeric code, instead of a link-only template. A sample is in `docs/email-otp-template.html`. Review the configured code length and expiry; the form accepts 6–10 numeric digits. Use a short expiry suitable for login (for example, ten minutes).
-4. Configure custom SMTP with a verified sending domain for deliveries to public users. Supabase's built-in email sender is restricted to authorized team addresses and is not a production email service. Keep SMTP credentials in Supabase's settings, never in browser files or Git. Provider email and verification rate limits remain authoritative; the 60-second client resend delay only improves the interface.
-5. Set the public `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` environment values, then run `npm run configure:auth`. This writes the public browser configuration. Only `sb_publishable_…` keys are accepted; secret/service-role keys are deliberately rejected. Public project settings may be committed; SMTP passwords, service keys, and management credentials must not be.
-6. Run `npm install`, `npm run build`, and the checks below. Deploy the tested configuration, then verify real registration, inbox delivery, invalid/expired codes, repeat login, and sign-out using an email address you own.
-
-Session storage, renewal, and revocation are handled by the Supabase SDK. Sessions use `sessionStorage` and survive reloads within the tab; restoration checks the provider's current user endpoint. Signing out revokes the local session and clears the in-memory health profile. No private server resources or cross-device profile storage are added in this feature. Any future account-owned database/API must validate identity and ownership server-side, with row-level security; frontend account visibility is not an authorization boundary.
-
-`npm run test:auth` runs a real-browser integration suite with the real SDK and **mocked provider responses**. It never sends email. It checks unavailable setup, registration versus login, wrong/expired codes, cooldown, session restoration, account display, sign-out, rate-limit errors, and accessibility. Keep `npm start` running and use installed Chrome, as for the dashboard browser suite.
-
-Official setup references: [Passwordless email OTP](https://supabase.com/docs/guides/auth/auth-email-passwordless), [email templates](https://supabase.com/docs/guides/auth/auth-email-templates), [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp), and [API key types](https://supabase.com/docs/guides/getting-started/api-keys).
-
-## Interface and accessibility
-
-The analytical dashboard includes current-condition metrics, 7-day daily and 24-hour hourly trend views, an exact-value table, labeled CSV downloads, interactive forecast hours, pollutant explanations, and a health profile. Charts resize their coordinate system to keep labels readable on small screens. Risks have text labels as well as color.
-
-Controls support keyboards, visible focus, native modal focus containment and Escape dismissal. Dialogs have accessible titles and descriptions. Loading, error, profile, and forecast changes are announced to assistive technology. Mobile forecast targets use two columns. Reduced-motion and forced-colors preferences are respected. The interface uses system fonts and no external font requests.
-
-For browser regression checks, run `npm install`, keep `npm start` running, then run `npm run test:browser`. The script uses installed Google Chrome by default (`BROWSER_CHANNEL=chromium` uses Playwright Chromium after installing it separately). Tests cover chart periods and table data, CSV, profile apply/cancel and focus restoration, city search, hourly selection, error recovery, five viewport sizes, and axe scans of desktop, mobile, dialogs and errors. Reports and screenshots are saved to a temporary directory printed by the script. Automated checks complement manual accessibility testing; they do not certify WCAG conformance.
-
-## Demo video
-
-The horizontal product film is exported locally to `exports/demo-video/aqility-demo-1080p.mp4` (1920×1080, H.264/AAC, 30 fps). The folder also contains an editable subtitle file, cover image, source footage, narration, and production notes; generated media is ignored by Git.
-
-To reproduce it, keep `npm start` running, install FFmpeg and Python Pillow, and run these commands from the repository root:
-
-```powershell
-npx playwright install ffmpeg
-node --env-file=.env scripts/capture-demo.mjs
-python scripts/render-demo.py
-node --env-file=.env scripts/caption-demo.mjs
-```
-
-Capture uses the actual app, genuine GPT-5 nano summaries, and smallest.ai playback with illustrative environmental demo data. Narration uses smallest.ai TTS; caption alignment requires Pulse speech-to-text access on the same key. API requests use provider credits. Existing media and timestamps are reused on reruns. To refresh a recording, move its generated `capture.json` aside first. Original vector-style illustrations accompany the footage. Audio contains only narration and the app voice excerpt, with no background bed or music.
+The ChatGPT-hosted link is an earlier published preview and may differ from `dev`. Run locally for the latest AI and voice integration. Server API keys are configured separately for each deployment.
 
 ## Features
 
-- City search and optional device location.
-- Open-Meteo/CAMS modeled US AQI, pollutant concentrations, and weather.
-- Previous seven days of archived hourly AQI estimates, aggregated daily.
-- Next 24 hours of outdoor planning, filtered for daytime, pollution, temperature, rain, and UV.
-- Optional in-memory age and health profile; no health fields sent to providers or saved in browser storage.
-- Explicit demo mode, error states, keyboard-accessible native dialogs, responsive layout, and chart text alternatives.
+| Feature | What it does |
+| --- | --- |
+| **Air quality and weather** | View US AQI, fine particles, temperature, humidity, wind, UV, and rain probability for a searched city or your device location. |
+| **Trends and exports** | Compare seven-day daily and 24-hour hourly history, inspect exact values, and download labeled CSV data. |
+| **Outdoor planner** | Compare the next 24 hours for walking, running, or commuting using pollution and weather thresholds. |
+| **Personal precautions** | Adjust guidance with an optional age and health profile that stays in memory in the browser tab. |
+| **AI summary** | Generate a briefing with OpenAI GPT-5 nano. A clearly labeled local summary works without an API key. |
+| **Spoken briefings** | Listen with smallest.ai, replay cached audio, and stop anytime. Browser speech provides a fallback. |
+| **Email OTP** | Supabase-backed registration and login using a numeric email code; delivery requires project email configuration. |
+| **Accessible interface** | Responsive layouts, keyboard controls, visible focus, native dialogs, chart text alternatives, and reduced-motion support. |
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="65%"><img src="docs/images/summary-voice.png" alt="A real GPT-5 nano summary with smallest.ai voice playback active"><br><sub><b>AI summary and voice</b> — generated from the environmental report.</sub></td>
+    <td width="35%" rowspan="2"><img src="docs/images/mobile.png" alt="The AI summary on a narrow mobile screen" width="280"><br><sub><b>Mobile</b> — the same briefing on a smaller screen.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/planner.png" alt="Outdoor planner comparing hourly air quality and weather"><br><sub><b>Outdoor planner</b> — compare hours and change your activity.</sub></td>
+  </tr>
+</table>
+
+<details>
+<summary><b>Health profile and privacy</b></summary>
+
+<img src="docs/images/profile.png" alt="Optional health-profile dialog with age and precaution settings" width="500">
+
+Health fields stay in memory in the browser tab. They are excluded from authentication, AI-summary, and voice requests, and are cleared on reload or sign-out.
+
+</details>
+
+<sub>Screenshots use illustrative environmental demo data. AI text and cloud speech are real provider responses. Regenerate with <code>npm run screenshots</code> while the app is running with configured providers; this uses API credits. No account or API-key settings are photographed.</sub>
+
+## Demo video
+
+[![Watch the 47-second horizontal Aqility demo](docs/images/demo-cover.png)](https://raw.githubusercontent.com/ayusht9/aqility/dev/docs/media/aqility-demo.mp4)
+
+**[Watch or download the video](docs/media/aqility-demo.mp4)** · [Download subtitles](docs/media/aqility-demo.srt)
+
+A 47-second horizontal 1080p walkthrough with original illustrations, actual app interactions, live AI generation, smallest.ai narration, and highlighted captions. Environmental data is labeled as illustrative. Audio contains narration and an app voice excerpt, with no background music or hum. See [reproduction steps](docs/DEVELOPMENT.md#demo-video).
+
+## Quick start
+
+Requires **Node.js 22.12 or newer** and npm. The public dashboard and local summaries work without API keys.
+
+```sh
+git clone https://github.com/ayusht9/aqility.git
+cd aqility
+git switch dev
+npm ci
+npm start
+```
+
+Open **http://localhost:5173**. Use **Explore demo** for labeled sample data, or search a city for modeled readings.
+
+### Enable AI and cloud voice
+
+Copy `.env.example` to `.env`, then fill in your own values locally:
+
+```env
+OPENAI_API_KEY=
+OPENAI_SUMMARY_MODEL=gpt-5-nano
+SMALLEST_API_KEY=
+SMALLEST_VOICE_ID=meher
+```
+
+Restart `npm start`. Choose **AI summary** at the top of the dashboard, then **Listen**. Keys stay on the Node server; `.env` is ignored by Git. Do not paste keys into browser files, screenshots, issues, or pull requests.
+
+| Setting | Purpose |
+| --- | --- |
+| `OPENAI_API_KEY` | Direct OpenAI summaries; takes priority over gateway credentials. |
+| `OPENAI_SUMMARY_MODEL` | Summary model; defaults to `gpt-5-nano`. |
+| `SMALLEST_API_KEY` | smallest.ai Lightning v3.1 Pro speech generation. |
+| `SMALLEST_VOICE_ID` | Voice selection; defaults to `meher`. |
+| `AI_GATEWAY_API_KEY` | Optional alternative to a direct OpenAI key. |
+| `AI_SUMMARY_MODEL` | Gateway model; defaults to `google/gemini-3.8-flash`. |
+| `PORT` | Local server port; defaults to `5173`. |
+
+Requests use provider credits. Summary requests include only the city, selected activity, and environmental readings. Voice requests contain the displayed summary. Provider errors fall back to local summaries and browser speech where available.
+
+For email login, configure the Supabase site URL, numeric-code email templates, and SMTP. See [email OTP setup](docs/DEVELOPMENT.md#email-otp-authentication). Real inbox delivery has not yet been verified.
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Interface | HTML, CSS, vanilla JavaScript ES modules, responsive SVG charts |
+| Server | Node.js HTTP server with bounded JSON endpoints |
+| Environmental data | Open-Meteo APIs and CAMS modeled estimates |
+| AI summaries | Vercel AI SDK with direct OpenAI GPT-5 nano or optional AI Gateway |
+| Voice | smallest.ai Lightning v3.1 Pro, HTML audio, browser speech |
+| Authentication | Supabase Auth email OTP and bundled browser SDK |
+| Verification | Node test runner, Playwright, axe-core |
+| Demo production | Playwright, FFmpeg, Pillow, smallest.ai narration and caption alignment |
+
+## Development and checks
+
+```sh
+npm test                # Unit and HTTP boundary checks
+npm run build           # Bundle the Supabase browser SDK
+npm run test:browser    # Dashboard interactions and accessibility
+npm run test:auth       # Email OTP flows with mocked provider responses
+npm run test:summary    # Summary and browser speech flows
+npm run test:voice      # Cloud playback behavior with mocked audio
+```
+
+Keep the app running for browser checks. The summary browser suite expects a server with AI credentials unset for its local-fallback check: run `node server.js` in a clean environment on a separate `PORT` and point `BASE_URL` at it. Browser scripts use installed Chrome by default; set `BROWSER_CHANNEL=chromium` after installing Playwright Chromium to use it instead. Automated accessibility checks complement manual testing and do not certify conformance.
+
+Live GPT-5 nano generation, smallest.ai WAV delivery, audio decoding, and Stop playback have also been verified locally with configured credentials. Automated provider tests use simulated responses.
+
+See the [development guide](docs/DEVELOPMENT.md) for authentication, API behavior, accessibility coverage, and video production.
+
+## Contributing
+
+Start temporary `feature/*` or `bugfix/*` branches from the latest `dev`. Validate changes, squash merge each completed feature or fix into `dev`, then delete the temporary branch. `main` is the stable production branch and receives tested releases or urgent hotfixes. Use conventional commits and keep credentials out of commits.
+
+[Report a bug or suggest an improvement](https://github.com/ayusht9/aqility/issues) with steps to reproduce it. For changes involving AI, describe local fallback and configured-provider behavior.
 
 ## Scope and sources
 
-The planner uses an explainable rules engine, not a clinical risk model. Optional AI summaries rephrase its environmental report; they do not drive the planner or assess individual medical risk. The app connects environmental conditions with published health precautions, not patient records or epidemiological outcome statistics. Historical data are archived model estimates, not observations. Do not interpret the historical comparison as evidence of a causal health relationship.
+Aqility is a hackathon prototype for environmental planning, not a clinical risk model. Forecasts and history are modeled estimates, not measurements at your exact location. The planner uses explainable heuristics; AI summaries rephrase its report and can make mistakes. Follow local advisories and your clinician's care plan.
 
-AQI precautions: https://www.airnow.gov/aqi/aqi-basics/ and https://www.airnow.gov/sites/default/files/2023-03/air-quality-guide-for-particle-pollution_0.pdf. Model data: https://open-meteo.com/en/docs/air-quality-api, https://open-meteo.com/en/docs and https://atmosphere.copernicus.eu/. Open-Meteo free endpoint is for noncommercial use; review its licensing before commercialization.
+- [Open-Meteo air-quality API](https://open-meteo.com/en/docs/air-quality-api) and [weather API](https://open-meteo.com/en/docs).
+- [Copernicus Atmosphere Monitoring Service](https://atmosphere.copernicus.eu/) modeled air-quality data.
+- [AirNow AQI basics](https://www.airnow.gov/aqi/aqi-basics/) and [particle-pollution guidance](https://www.airnow.gov/sites/default/files/2023-03/air-quality-guide-for-particle-pollution_0.pdf).
 
-The planner applies conservative prototype thresholds (temperature below 10°C or at least 30°C, UV at least 6, rain probability at least 40%) alongside AQI rules. These thresholds are planning heuristics, not validated medical cutoffs. The app does not diagnose, prescribe medication, or guarantee safe outdoor conditions. AI summaries can make mistakes and require evaluation before production use. No credentials should be added to static browser code.
+## License
+
+[MIT](LICENSE) © 2026 Ayush. Dependencies, provider services, and environmental datasets retain their own licenses and terms. This repository's license does not grant rights to third-party data or remove provider usage restrictions.
