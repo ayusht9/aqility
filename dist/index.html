@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#132c39" />
     <meta
       name="description"
-      content="Air quality analytics, weather forecasts, and personalized outdoor planning."
+      content="Air quality insights, low-emission routines, indoor-air tips, and AI-powered outdoor planning briefings."
     />
     <title>Aqility | Environmental dashboard</title>
     <link rel="stylesheet" href="style.css" />
@@ -97,6 +97,9 @@
         ><a href="#history"
           ><svg class="icon" aria-hidden="true"><use href="#i-chart" /></svg>Air
           quality trends</a
+        ><a href="#daily-plan"
+          ><svg class="icon" aria-hidden="true"><use href="#i-shield" /></svg
+          >Cleaner-air action plan</a
         ><a href="#forecast"
           ><svg class="icon" aria-hidden="true"><use href="#i-clock" /></svg
           >Outdoor planner</a
@@ -204,7 +207,7 @@
               <div>
                 <span class="outlook-label">Your air, explained</span>
                 <h2 id="summary-title">AI summary &amp; voice</h2>
-                <p>Summarize current conditions, then listen to your briefing.</p>
+                <p>Summarize conditions and your cleaner-air action plan, then listen.</p>
               </div>
               <div class="summary-actions">
                 <button id="generate-summary" class="button primary" type="button" disabled>AI summary</button>
@@ -214,7 +217,7 @@
             <p id="summary-source" class="summary-source"></p>
             <p id="generated-summary" class="summary-copy">Load a city’s conditions to create a summary.</p>
             <p id="summary-status" class="panel-footnote" role="status" aria-live="polite" aria-atomic="true"></p>
-            <p class="panel-footnote">General adult guidance. Your personal profile may need extra precautions. Only environmental readings and your selected activity are sent for AI summaries. Listen sends the displayed summary to smallest.ai when configured, with browser speech as a fallback.</p>
+            <p class="panel-footnote">General adult guidance. Your personal profile may need extra precautions. Environmental readings, your selected activity, and your daily routine are sent for AI summaries; health-profile fields stay in this tab. Listen sends the displayed summary to smallest.ai when configured, with browser speech as a fallback.</p>
           </section>
           <section class="metrics" aria-label="Current environmental metrics">
             <article class="metric-card aqi-card">
@@ -377,6 +380,26 @@
               </div>
             </section>
           </div>
+          <section id="daily-plan" class="panel action-panel" aria-labelledby="action-title">
+            <div class="panel-heading">
+              <div>
+                <span class="outlook-label">Small choices, clearer air</span>
+                <h2 id="action-title">Your cleaner-air action plan</h2>
+                <p>Low-emission routines, indoor-air tips, and the impact of your choices.</p>
+              </div>
+              <label class="activity-label" for="routine">Your daily routine
+                <select id="routine">
+                  <option value="commute">Daily commute</option>
+                  <option value="home">Mostly at home</option>
+                  <option value="family">Family trips</option>
+                  <option value="community">Community activities</option>
+                </select>
+              </label>
+            </div>
+            <p id="action-context" class="action-context" role="status" aria-live="polite">Loading local conditions for your action plan…</p>
+            <div id="action-cards" class="action-cards"></div>
+            <p class="panel-footnote">Exposure and emissions are different: cleaner indoor air can reduce what you breathe; fewer vehicle trips reduce pollution at its source. Indoor AQI and emissions savings are not measured here. Health fields stay in your tab; the selected routine is included only when you request a summary.</p>
+          </section>
           <section
             id="forecast"
             class="panel planner"

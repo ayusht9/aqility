@@ -43,7 +43,7 @@ export function initSummary() {
     button.setAttribute("aria-busy", "false");
     listen.disabled = true;
     source.textContent = "";
-    output.textContent = data ? "Get a short overview of current conditions and the next 24 hours." : "Load a city’s conditions to create a summary.";
+    output.textContent = data ? "Get a short briefing on conditions, outdoor planning, low-emission routines, and cleaner indoor air." : "Load a city’s conditions to create a summary.";
     status.textContent = supported || cloud ? "" : "Spoken playback is unavailable in this browser. You can still read the summary.";
   }
   button.addEventListener("click", async () => {

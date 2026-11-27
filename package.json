@@ -10,6 +10,7 @@
     "test:auth": "node tests/auth-browser.mjs",
     "test:summary": "node tests/summary-browser.mjs",
     "test:voice": "node tests/voice-browser.mjs",
+    "test:plan": "node tests/action-plan-browser.mjs",
     "build": "node scripts/build-auth.mjs",
     "configure:auth": "node scripts/configure-auth.mjs",
     "screenshots": "node scripts/readme-screenshots.mjs"

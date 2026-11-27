@@ -10,6 +10,7 @@ const files = {
   "/chart.js": ["chart.js", "text/javascript"],
   "/summary.js": ["summary.js", "text/javascript"],
   "/summary-data.js": ["summary-data.js", "text/javascript"],
+  "/action-plan.js": ["action-plan.js", "text/javascript"],
   "/style.css": ["style.css", "text/css"],
   "/auth.js": ["auth.js", "text/javascript"],
   "/auth.css": ["auth.css", "text/css"],

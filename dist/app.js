@@ -24,6 +24,7 @@ import {
 } from "./chart.js";
 import { initAuth } from "./auth.js";
 import { initSummary } from "./summary.js";
+import { actionPlan, routines } from "./action-plan.js";
 
 const summary = initSummary();
 
@@ -31,6 +32,7 @@ const $ = (selector) => document.querySelector(selector);
 const state = {
   profile: { age: "adult" },
   activity: "walk",
+  routine: "commute",
   city: { ...DEFAULT_CITY },
   data: null,
   demo: false,
@@ -167,8 +169,9 @@ function clearData(loading) {
     ? "Loading trend data…"
     : "Trend data unavailable.";
   $("#history-average").textContent = "Average —";
-  for (const id of ["hours", "advice", "pollutants", "history-rows"])
+  for (const id of ["hours", "advice", "pollutants", "history-rows", "action-cards"])
     $("#" + id).replaceChildren();
+  $("#action-context").textContent = loading ? "Loading local conditions for your action plan…" : "Refresh data to build a location-aware action plan.";
   $("#best-title").textContent = loading
     ? "Finding a suitable time"
     : "No forecast available";
@@ -216,6 +219,7 @@ function render() {
   renderTrend();
   renderForecast();
   renderAdvice(advice);
+  renderActionPlan();
   renderPollutants(c);
   const profileName = sensitive(profile)
     ? "Sensitive profile"
@@ -227,7 +231,7 @@ function render() {
     `${profileName} · ${activityNames[activity]}${sensitive(profile) ? " · extra precautions applied" : ""}`;
   summary.reset({
     city: [city.name, city.country].filter(Boolean).join(", ").slice(0, 100),
-    activity, demo: state.demo, current: c,
+    activity, routine: state.routine, demo: state.demo, current: c,
     hours: hours.filter(h => h.time >= c.time).slice(0, 24),
   });
 }
@@ -334,6 +338,32 @@ function renderAdvice(items) {
     container.append(row);
   });
 }
+
+function renderActionPlan() {
+  const { current } = state.data;
+  const cards = actionPlan(current, state.profile, state.activity, state.routine);
+  $("#action-context").textContent = `${state.city.name} · US AQI ${number(current.aqi)} (${category(current.aqi)}) · ${routines[state.routine]}${state.demo ? " · illustrative demo data" : " · modeled conditions"}`;
+  const container = $("#action-cards");
+  container.replaceChildren();
+  for (const item of cards) {
+    const card = element("article", "action-card");
+    card.append(element("span", "action-kind", item.kind), element("h3", "", item.title), element("p", "action-copy", item.action));
+    const details = element("dl", "action-details");
+    for (const [label, copy] of [["Why this fits", item.reason], ["How it helps", item.impact]]) {
+      const row = element("div"); row.append(element("dt", "", label), element("dd", "", copy)); details.append(row);
+    }
+    const source = element("a", "action-source", item.source.label);
+    source.href = item.source.href; source.target = "_blank"; source.rel = "noopener noreferrer";
+    source.append(element("span", "sr-only", " (opens a new tab)"));
+    card.append(details, source); container.append(card);
+  }
+}
+
+$("#routine").addEventListener("change", event => {
+  state.routine = event.target.value;
+  render();
+  announce("Cleaner-air action plan updated for your daily routine. Generate a new summary to hear the updated plan.");
+});
 
 function renderPollutants(current) {
   const container = $("#pollutants");

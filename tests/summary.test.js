@@ -97,7 +97,7 @@ test("real OpenAI SDK sends GPT-5 nano request and parses a provider response", 
   });
   const result = await createSummary(input(), { env: { OPENAI_API_KEY: "test-only-not-a-real-key" } });
   assert.equal(called, true);
-  assert.deepEqual(result, { source: "ai", summary: "Conditions favor indoor activity." });
+  assert.deepEqual(result, { source: "ai", summary: "Illustrative demo data. Conditions favor indoor activity." });
 });
 
 test("summary HTTP boundary rejects bad method, foreign origins, malformed and oversized bodies", async () => {

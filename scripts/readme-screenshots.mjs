@@ -11,6 +11,7 @@ try {
   await page.waitForFunction(() => document.querySelector("#mode-badge").textContent === "Demo data");
   await page.screenshot({ path: `${out}/dashboard.png` });
   await page.locator("#forecast").screenshot({ path: `${out}/planner.png` });
+  await page.locator("#daily-plan").screenshot({ path: `${out}/action-plan.png` });
   await page.locator(".profile-open").first().click();
   await page.locator("#profile-dialog").screenshot({ path: `${out}/profile.png` });
   await page.keyboard.press("Escape");
@@ -28,5 +29,5 @@ try {
   await page.setViewportSize({ width: 390, height: 1000 });
   await page.locator("#ai-summary").scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${out}/mobile.png` });
-  console.log("Saved five app screenshots using illustrative demo data; no account or configuration screens captured.");
+  console.log("Saved six app screenshots using illustrative demo data; no account or configuration screens captured.");
 } finally { await browser.close(); }

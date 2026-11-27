@@ -38,6 +38,7 @@ The [Vercel deployment](https://aqility.vercel.app) serves the released app with
 | **Trends and exports** | Compare seven-day daily and 24-hour hourly history, inspect exact values, and download labeled CSV data. |
 | **Outdoor planner** | Compare the next 24 hours for walking, running, or commuting using pollution and weather thresholds. |
 | **Personal precautions** | Adjust guidance with an optional age and health profile that stays in memory in the browser tab. |
+| **Cleaner-air action plan** | Choose a commute, home, family, or community routine. Get low-emission alternatives and indoor-air tips with reasons, impact explanations, and EPA source links. |
 | **AI summary** | Generate a briefing with OpenAI GPT-5 nano. A clearly labeled local summary works without an API key. |
 | **Spoken briefings** | Listen with smallest.ai, replay cached audio, and stop anytime. Browser speech provides a fallback. |
 | **Email OTP** | Supabase-backed registration and login using a numeric email code; delivery requires project email configuration. |
@@ -54,6 +55,10 @@ The [Vercel deployment](https://aqility.vercel.app) serves the released app with
     <td><img src="docs/images/planner.png" alt="Outdoor planner comparing hourly air quality and weather"><br><sub><b>Outdoor planner</b> — compare hours and change your activity.</sub></td>
   </tr>
 </table>
+
+<img src="docs/images/action-plan.png" alt="Cleaner-air action plan with routine choices, indoor ventilation advice, lower-emission alternatives, and explanations of their impact" width="1000">
+
+<sub><b>Cleaner-air action plan</b> — tailored to the selected city, modeled conditions, planned activity, and daily routine. Indoor exposure and outdoor emissions are explained separately; no carbon savings or indoor AQI values are invented.</sub>
 
 <details>
 <summary><b>Health profile and privacy</b></summary>
@@ -111,7 +116,7 @@ Restart `npm start`. Choose **AI summary** at the top of the dashboard, then **L
 | `AI_SUMMARY_MODEL` | Gateway model; defaults to `google/gemini-3.8-flash`. |
 | `PORT` | Local server port; defaults to `5173`. |
 
-Requests use provider credits. Summary requests include only the city, selected activity, and environmental readings. Voice requests contain the displayed summary. Provider errors fall back to local summaries and browser speech where available.
+Requests use provider credits. Summary requests include the city, selected activity, selected daily routine, and environmental readings. Health fields are excluded. Voice requests contain the displayed summary. Summaries include a low-emission action and an indoor-air tip with their impact. Provider errors fall back to local summaries and browser speech where available.
 
 For email login, configure the Supabase site URL, numeric-code email templates, and SMTP. See [email OTP setup](docs/DEVELOPMENT.md#email-otp-authentication). Real inbox delivery has not yet been verified.
 
@@ -149,6 +154,7 @@ npm run test:browser    # Dashboard interactions and accessibility
 npm run test:auth       # Email OTP flows with mocked provider responses
 npm run test:summary    # Summary and browser speech flows
 npm run test:voice      # Cloud playback behavior with mocked audio
+npm run test:plan       # Routine-based action plan and summary privacy
 ```
 
 Keep the app running for browser checks. The summary browser suite expects a server with AI credentials unset for its local-fallback check: run `node server.js` in a clean environment on a separate `PORT` and point `BASE_URL` at it. Browser scripts use installed Chrome by default; set `BROWSER_CHANNEL=chromium` after installing Playwright Chromium to use it instead. Automated accessibility checks complement manual testing and do not certify conformance.
@@ -170,6 +176,7 @@ Aqility is a hackathon prototype for environmental planning, not a clinical risk
 - [Open-Meteo air-quality API](https://open-meteo.com/en/docs/air-quality-api) and [weather API](https://open-meteo.com/en/docs).
 - [Copernicus Atmosphere Monitoring Service](https://atmosphere.copernicus.eu/) modeled air-quality data.
 - [AirNow AQI basics](https://www.airnow.gov/aqi/aqi-basics/) and [particle-pollution guidance](https://www.airnow.gov/sites/default/files/2023-03/air-quality-guide-for-particle-pollution_0.pdf).
+- EPA guidance on [cleaner transport and avoiding idling](https://www.epa.gov/transportation-air-pollution-and-climate-change/what-you-can-do-reduce-pollution-vehicles-and) and [creating a cleaner-air room](https://www.epa.gov/wildfires/how-create-cleaner-air-room-home), adapted into conditional action cards. Indoor recommendations do not imply that the app measures indoor air.
 
 ## License
 
