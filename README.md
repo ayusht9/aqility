@@ -62,7 +62,7 @@ python scripts/render-demo.py
 node --env-file=.env scripts/caption-demo.mjs
 ```
 
-Capture uses the actual app, genuine GPT-5 nano summaries, and smallest.ai playback with illustrative environmental demo data. Narration uses smallest.ai TTS; caption alignment requires Pulse speech-to-text access on the same key. API requests use provider credits. Existing media and timestamps are reused on reruns. To refresh a recording, move its generated `capture.json` aside first. Original vector-style illustrations and an original quiet synthesized audio bed accompany the footage.
+Capture uses the actual app, genuine GPT-5 nano summaries, and smallest.ai playback with illustrative environmental demo data. Narration uses smallest.ai TTS; caption alignment requires Pulse speech-to-text access on the same key. API requests use provider credits. Existing media and timestamps are reused on reruns. To refresh a recording, move its generated `capture.json` aside first. Original vector-style illustrations accompany the footage. Audio contains only narration and the app voice excerpt, with no background bed or music.
 
 ## Features
 

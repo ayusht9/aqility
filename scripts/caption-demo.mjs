@@ -61,9 +61,8 @@ for (let i = 0; i < words.length;) {
 await writeFile(join(out, "captions.ass"), ass);
 await writeFile(join(out, "aqility-demo.srt"), srt);
 const duration = timeline.at(-1).start + timeline.at(-1).duration;
-const ff = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", "uncaptioned.mp4", "-f", "lavfi", "-i",
-  "aevalsrc=0.1*(sin(2*PI*164.81*t)+sin(2*PI*220*t)+sin(2*PI*329.63*t)):s=48000",
-  "-filter_complex", `[0:v]ass=captions.ass[v];[0:a]loudnorm=I=-16:TP=-1.5:LRA=9[voice];[1:a]volume=0.045,afade=t=in:d=1,afade=t=out:st=${duration-1}:d=1[bed];[voice][bed]amix=inputs=2:duration=first:normalize=0[a]`,
+const ff = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", "uncaptioned.mp4",
+  "-filter_complex", "[0:v]ass=captions.ass[v];[0:a]loudnorm=I=-16:TP=-1.5:LRA=9[a]",
   "-map", "[v]", "-map", "[a]", "-t", String(duration), "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
   "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", "aqility-demo-1080p.mp4"], { cwd: out, encoding: "utf8" });
 if (ff.status !== 0) throw new Error(ff.stderr.slice(-3000));
@@ -71,5 +70,5 @@ await writeFile(join(out, "production-notes.json"), JSON.stringify({ format: "19
   captions: "Burned-in word-highlight captions aligned with smallest.ai Pulse Pro word timestamps; editable SRT included",
   footage: "Actual localhost app operation; illustrative environmental demo data; genuine GPT-5 nano and smallest.ai requests",
   visuals: "Original vector-style city and park illustrations, generated with Pillow",
-  audio: "smallest.ai narration, an actual app voice excerpt, and a quiet original synthesized ambient bed" }, null, 2));
+  audio: "smallest.ai narration and an actual app voice excerpt; no background bed or music" }, null, 2));
 console.log(JSON.stringify({ video: join(out, "aqility-demo-1080p.mp4"), duration, captionWords: words.length, captionGroups: count }));
