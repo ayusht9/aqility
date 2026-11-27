@@ -16,7 +16,6 @@ Air-quality insights, low-emission routines, indoor-air tips, and spoken AI brie
 [![Repository size](https://img.shields.io/github/repo-size/ayusht9/aqility?color=103d43)](https://github.com/ayusht9/aqility)
 
 [**Live app on Vercel**](https://aqility.vercel.app) ·
-[ChatGPT-hosted preview](https://aqility-air-companion.afloatsesame32.chatgpt.site) ·
 [Watch the demo](https://raw.githubusercontent.com/ayusht9/aqility/main/docs/media/aqility-demo.mp4) ·
 [Quick start](#quick-start) ·
 [Screenshots](#screenshots) ·
@@ -28,7 +27,7 @@ Air-quality insights, low-emission routines, indoor-air tips, and spoken AI brie
 
 Aqility was built for **PromptWars: Virtual by Hack2skill**. It connects modeled US AQI and weather with practical daily choices: lower-emission travel, cleaner indoor-air habits, and a 24-hour outdoor planner. Choose a commute, home, family, or community routine, see why each action fits, and hear the plan as an AI-generated briefing.
 
-The [Vercel deployment](https://aqility.vercel.app) serves the released app with AI summaries and cloud voice. The ChatGPT-hosted link is an earlier published preview and may differ from `dev`. Server API keys are configured separately for each deployment.
+The [Vercel deployment](https://aqility.vercel.app) serves the released app with AI summaries and cloud voice. Server API keys are configured separately for each deployment.
 
 ## Features
 
